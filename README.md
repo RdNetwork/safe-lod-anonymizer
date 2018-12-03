@@ -64,8 +64,8 @@ python main.py
 
 **The graph anonymization feature is still a work in progress**. We advise you
 perform yourself the operations we provide on your usual triple store engine.
-Right now, the code uses a Turtle-formatted RDF graph, named ```graph.ttl``` in the ```/conf/graphs```
-directory.
+Right now, the code uses a Turtle-formatted RDF graph, named ```graph.ttl``` 
+in the ```/conf/graphs``` directory.
 
 You can also use the demo mode, which is ran using a shortened workload, with 2
 privacy queries and 2 utility queries used the article's examples:
@@ -89,11 +89,11 @@ demo mode's one.
 
 The standard execution will compute a set of operations, such that each one of
 them must be performed on a graph to make it safe. This list of operations is
-written to the file ```out/ops.txt```. After choosing a sequence, its operations (here only deletions)
+written to the file ```out/ops.txt```. After a validation, the operations
 are performed on the graph, creating several output files:
 
 - A copy file of the original graph, named ```[original graph file name]_orig.ttl```
-- One output file per operation, named ```[original graph file name]_anonymized_stepX.ttl```, X being the number of the applied of the applied operation.
+- One output file per operation, named ```[original graph file name]_anonymized_stepX.ttl```, X being the number of the applied operation.
 
 **/!\ WARNING:** running the program in standard mode will NOT erase previous
 outputs. RDF stores files can get pretty big, so be careful!
