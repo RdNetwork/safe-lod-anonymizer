@@ -51,7 +51,7 @@ def find_safe_ops(privacy_pol):
                 v = '?' + v
             g_prime_post = []
             for t in g_prime:
-                print("Replace "+v+" by blank in "+t)
+                # print("Replace "+v+" by blank in "+t)
                 t_int = t.replace(v+" ","_:b"+str(b_index)+" ")
                 g_prime_post.append(t_int.replace(" "+v," _:b"+str(b_index)))
             b_index += 1

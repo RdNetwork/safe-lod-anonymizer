@@ -50,14 +50,14 @@ def main():
         p_pol_size = 2
     else:
         p_pol_size = int(sys.argv[1])
-        if "-t" in sys.argv[3:]:
+        if "-t" in sys.argv[2:]:
             print "Running in test mode: no graph anonymisation after computing sequences."
             TEST = True
 
     NB_EXPERIMENTS = 1
 
     # Fetching gmark queries
-    #  DEMO uses a simple workload with 2 short queries.
+    # DEMO uses a simple workload with 2 short queries.
     print "Fetching query workload..."
     if DEMO:
         workload = Query.parse_gmark_queries("./conf/workloads/demo.xml")
@@ -96,19 +96,16 @@ def main():
         # Run algorithm
         print "Computing candidate operations..."
         o = find_safe_ops(p_pol)
+        print "Set of operations found:"
         print(o)
-        ops = [o]
         
         # Writing operations to result files
-        op_id = 0
-        for o in ops:
-            with open('./out/op'+str(op_id)+'.txt', 'w+') as outfile:
-                outfile.write(str(ops[op_id]))
-                outfile.close()
-                op_id += 1
+        with open('./out/ops.txt', 'w+') as outfile:
+            outfile.write(str(o))
+            outfile.close()
         
         # WIP: Graph anonymization
-        if ops and not TEST:    
+        if o and not TEST:    
             # Import graph
             print "Importing graph..."
             g = Graph()
@@ -116,26 +113,28 @@ def main():
                 g.parse(file=f, format="turtle")
             print str(len(g)) + " triples found"
 
-            print str(len(ops)) + " possible anonymization sequences found."
-            print "Choose the sequence to be applied:"
-            i = 0
-            for i in (range(len(ops))):
-                print "\t" + str(i+1) + ": " + str(ops[i])
-                i = i+1
-            choice = raw_input('Operation choice: ')
+            print "A set of " + str(len(o)) + " operations was found."
+            print o
+            choice = ''
+            while not (choice == 'Y' or choice == 'N'):
+                choice = raw_input('Apply anonymization? Y/N (case-sensitive): ')
 
             # Perform anonymization
-            print "Anonymizing graph..."
-            g.serialize(destination='./out/output_anonymized_orig_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl', 
-                        format='trig')
-            print "\tOperation " + str(choice) + " launched..."
-            seq = ops[int(choice)-1]
-            seq_step = 0
-            for o in seq:
-                seq_step += 1
-                o.update(g, custom_prefixes())
-                g.serialize(destination='./out/output_anonymized_step'+str(seq_step)+'_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl',                         format='trig')
-            print "\tLength after deletion: " + str(len(g)) + " triples"
+            if choice == 'Y':
+                if not os.path.exists("./out/"):
+                    os.makedirs("./out/")
+                print "Anonymizing graph..."
+                g.serialize(destination='./out/output_anonymized_orig_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl', 
+                            format='trig')
+                print "\tOperation " + str(choice) + " launched..."
+                seq_step = 0
+                for op in o:
+                    seq_step += 1
+                    op.update(g, custom_prefixes())
+                    g.serialize(destination='./out/output_anonymized_step'+str(seq_step)+'_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl',                         format='trig')
+                print "\tLength after deletion: " + str(len(g)) + " triples"
+            else:
+                print "Terminating program..."
 
 if __name__ == "__main__":
     main()

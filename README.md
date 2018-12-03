@@ -76,7 +76,7 @@ python main.py -d
 ```
 
 The demo mode also accepts policies written as text files. Policies have to be stored
-in the ```/conf/workload/policies``` folder and named adequatly: ```p*.rq``` where * 
+in the ```/conf/workload/policies``` folder and named adequatly: ```p*.rq``` where *
 ranges from 1 to the number of privacy queries + 1.
 
 To run this "textual demo mode", for example with a policy featuring two queries, run the following:
@@ -88,8 +88,9 @@ python main.py 2 -d
 Two example policy files are provided, using a similar example to the standard
 demo mode's one.
 
-The standard execution will compute possible anonymization sequences, each one
-indexed by a number. After choosing a sequence, its operations (here only deletions)
+The standard execution will compute a set of operations, such that each one of
+them must be performed on a graph to make it safe. This list of operations is
+written to the file ```out/ops.txt```. After choosing a sequence, its operations (here only deletions)
 are performed on the graph, creating several output files:
 
 - A copy file of the original graph, named ```[original graph file name]_orig.ttl```
