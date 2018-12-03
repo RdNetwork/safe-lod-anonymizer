@@ -17,11 +17,10 @@ An default example with a simple, fixed privacy policy is also provided.
 
 ## Project architecture
 
+- ```conf``` directory: directory for configuration and input files (query workloads, test graphs, gMark configuration files).
 - ```*.py``` files: framework implementation in Python.
   - ```main.py``` being the main program to run the software
 - ```runtime_test.sh``` runs 20 iterations of the program with policies of cardinalty 10, and measure their runtime.
-- ```plot.r```: R script used to plot graphs used in the article and the added notebook.
-- ```conf``` directory: directory for configuration and input files (query workloads, test graphs, gMark configuration files).
 
 ## Setup
 
