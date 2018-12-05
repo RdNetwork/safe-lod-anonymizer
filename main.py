@@ -39,9 +39,14 @@ def main():
     TEST = False            #Test mode: no anonymiation after algorithms execution
     DEMO = False            #Demo mode: fixed gmark policies, simple example
     DEMO_TXT = False        #Textual mode: import queries from text files rather than gmark output
+    SAMEAS = False          #Safety modulo sameas : when True, also prevent inference by explicit sameAs links
 
+
+    if "-s" in sys.argv:
+        print "Running in strong mode: anonymization modulo sameas..."
+        SAMEAS = True
     if "-dt" in sys.argv:
-        print "Running in textual demo mode: reading poliy textfiles..."
+        print "Running in textual demo mode: reading policy textfiles..."
         DEMO_TXT = True
         p_pol_size = int(sys.argv[1])
     if "-d" in sys.argv:
@@ -50,9 +55,10 @@ def main():
         p_pol_size = 2
     else:
         p_pol_size = int(sys.argv[1])
-        if "-t" in sys.argv[2:]:
-            print "Running in test mode: no graph anonymisation after computing sequences."
-            TEST = True
+    
+    if "-t" in sys.argv[2:]:
+        print "Running in test mode: no graph anonymisation after computing sequences."
+        TEST = True
 
     NB_EXPERIMENTS = 1
 
@@ -95,7 +101,7 @@ def main():
 
         # Run algorithm
         print "Computing candidate operations..."
-        o = find_safe_ops(p_pol)
+        o = find_safe_ops(p_pol, SAMEAS)
         print "Set of operations found:"
         print(o)
         
@@ -114,7 +120,6 @@ def main():
             print str(len(g)) + " triples found"
 
             print "A set of " + str(len(o)) + " operations was found."
-            print o
             choice = ''
             while not (choice == 'Y' or choice == 'N'):
                 choice = raw_input('Apply anonymization? Y/N (case-sensitive): ')
