@@ -3,10 +3,11 @@ from prefix import Prefix
 class Operation(object):
     """Anonymisation operations class and methods."""
 
-    def __init__(self, del_head, upd_head, body):
+    def __init__(self, del_head, upd_head, body, filter=""):
         self.del_head = del_head
         self.upd_head = upd_head
         self.body = body
+        self.filter = filter
 
     def update(self, graph, prefixes):
         """
@@ -22,7 +23,8 @@ class Operation(object):
         res = "\n\tDELETE { " + ' '.join(self.del_head)  + "} \n"
         if self.upd_head:
             res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
-        res = res + "\tWHERE { " + ' '.join(self.body) + "}"
+        res = res + "\tWHERE { " + ' '.join(self.body) + "\n"
+        res = res + "\tFILTER (" + self.filter  + ") }"
         return res
 
     def __repr__(self):
@@ -31,4 +33,5 @@ class Operation(object):
     def __eq__(self, other):
         return (self.del_head == other.del_head and 
             self.upd_head == other.upd_head and 
-            self.body == other.body)
+            self.body == other.body and
+            self.filter == other.filter)

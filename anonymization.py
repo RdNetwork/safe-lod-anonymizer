@@ -2,7 +2,7 @@
 from operation import Operation
 from policy import Policy
 from unification import unify,var,variable
-from util import decompose_triple, replace_blank, var_to_str
+from util import decompose_triple, replace_blank, var_to_str, powerset
 
 def find_safe_ops(privacy_pol, sameas):
     """
@@ -60,7 +60,8 @@ def find_safe_ops(privacy_pol, sameas):
             b_index = 0
             v_index = 0
             for v in v_crit:
-                v = var_to_str(v)
+                print "VAR!"
+                #v = var_to_str(v)
                 if sameas:
                     g_prime_post = []
                     g_sec_post = []
@@ -79,17 +80,18 @@ def find_safe_ops(privacy_pol, sameas):
                     g_prime = g_prime_post
                     g_sec = g_sec_post
                 else:
-                    g_prime_post = []
-                    for t in g_prime:
-                        # Replace v by blank in t
-                        t_int = t.replace(v+" ","_:b"+str(b_index)+" ")
-                        g_prime_post.append(t_int.replace(" "+v," _:b"+str(b_index)))
-                        g_prime = g_prime_post
+                    for x in list(powerset(ind_v[v]))[::-1]:
+                        print "Considered subgraph:" + str(x)
+                        x_post = []
+                        for t in x:
+                            # Replace v by blank in t
+                            t_int = t.replace(v+" ","_:b"+str(b_index)+" ")
+                            x_post.append(t_int.replace(" "+v," _:b"+str(b_index)))
+                        ops.append(Operation(x, x_post, x, "!isBlank("+v+")"))
                 b_index += 1
             if sameas:
                 ops.append(Operation(g_sec, g_prime, g_sec))
-            else:
-                ops.append(Operation(q.where, g_prime, q.where))
+
             # Second operation: triples with critical literals deleted
             g_prime = []
             l_crit = set()

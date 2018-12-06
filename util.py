@@ -1,6 +1,7 @@
 """Utility methods."""
 import sys
 import os
+import itertools
 from unification import var
 
 def block_print():
@@ -71,3 +72,8 @@ def get_connected_group(graph, node, already_seen):
             nodes.update(graph[node] - already_seen)
         result.append(node)
     return result, already_seen
+
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    s = list(iterable)
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(1,len(s)+1))
