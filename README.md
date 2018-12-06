@@ -64,7 +64,7 @@ python main.py
 
 **The graph anonymization feature is still a work in progress**. We advise you
 perform yourself the operations we provide on your usual triple store engine.
-Right now, the code uses a Turtle-formatted RDF graph, named ```graph.ttl``` 
+Right now, the code uses a Turtle-formatted RDF graph, named ```graph.ttl```
 in the ```/conf/graphs``` directory.
 
 You can also use the demo mode, which is ran using a shortened workload, with 2

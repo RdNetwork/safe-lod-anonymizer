@@ -1,5 +1,7 @@
 import xml.etree.ElementTree
 from prefix import Prefix
+from util import decompose_triple, get_connected_group, get_all_connected_groups
+from unification import var,variable
 import fyzz
 
 class Query(object):
@@ -84,4 +86,26 @@ class Query(object):
             queries.append(q)
         return queries
 
+    def get_connected_components(self):
+        graph_dic = dict()
+        for t in self.where:
+            (s,_,o) = decompose_triple(t)
+            try:
+                graph_dic[s].add(o)
+            except KeyError:
+                graph_dic[s] = {o}
+        print graph_dic
+        components = get_all_connected_groups(graph_dic)
+
+        res_components = []
+        res_ind = 0
+        for c in components:
+            res_components.append([]) 
+            for t in self.where:
+                (s,_,o) = decompose_triple(t)
+                if s in c and o in c:
+                    res_components[res_ind].append(t)
+            res_ind += 1
             
+
+        return res_components

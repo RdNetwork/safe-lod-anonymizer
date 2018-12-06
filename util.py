@@ -40,3 +40,26 @@ def replace_blank(t, ind):
 def average_wl_size(workload):
     """Compute (integer) average size (in triples) of a query workload"""
     return int(sum(len(query.where) for query in workload) / float(len(workload)))
+
+
+def get_all_connected_groups(graph):
+    """From https://stackoverflow.com/a/50639220"""
+    already_seen = set()
+    result = []
+    for node in graph:
+        if node not in already_seen:
+            connected_group, already_seen = get_connected_group(graph, node, already_seen)
+            result.append(connected_group)
+    return result
+
+def get_connected_group(graph, node, already_seen):
+    """From https://stackoverflow.com/a/50639220"""
+    result = []
+    nodes = set([node])
+    while nodes:
+        node = nodes.pop()
+        already_seen.add(node)
+        if node in graph:
+            nodes.update(graph[node] - already_seen)
+        result.append(node)
+    return result, already_seen
