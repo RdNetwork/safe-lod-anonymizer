@@ -45,8 +45,8 @@ def main():
     if "-s" in sys.argv:
         print "Running in strong mode: anonymization modulo sameas..."
         SAMEAS = True
-    if "-dt" in sys.argv:
-        print "Running in textual demo mode: reading policy textfiles..."
+    if "-txt" in sys.argv:
+        print "Running in textual mode: reading policy textfiles..."
         DEMO_TXT = True
         p_pol_size = int(sys.argv[1])
     if "-d" in sys.argv:
@@ -74,9 +74,12 @@ def main():
 
     for _ in range(0, NB_EXPERIMENTS):
 
-        if DEMO or DEMO_TXT:
+        if DEMO:
             p_pol = Policy([workload[0], workload[1]], "P")
             p_pol_nums = [0, 1]
+        elif DEMO_TXT:
+            p_pol = Policy([workload[i] for i in range(p_pol_size)], "P")
+            p_pol_nums = range(p_pol_size)
         else:
             # Creating random seed...
             seed = random.randrange(sys.maxsize)

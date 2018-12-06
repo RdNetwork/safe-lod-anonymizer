@@ -19,10 +19,10 @@ class Operation(object):
         return graph.update(Prefix.writePrefixes(prefixes, "SPARQL") + str(self))
 
     def __str__(self):
-        res = "DELETE { " + ' '.join(self.del_head)  + "} \n"
+        res = "\n\tDELETE { " + ' '.join(self.del_head)  + "} \n"
         if self.upd_head:
-            res = res + "INSERT { " + ' '.join(self.upd_head)  + "} \n "
-        res = res + "WHERE { " + ' '.join(self.body) + "} \n"
+            res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
+        res = res + "\tWHERE { " + ' '.join(self.body) + "}"
         return res
 
     def __repr__(self):

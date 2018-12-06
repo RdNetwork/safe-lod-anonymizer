@@ -2,7 +2,7 @@
 from operation import Operation
 from policy import Policy
 from unification import unify,var,variable
-from util import decompose_triple, replace_blank
+from util import decompose_triple, replace_blank, var_to_str
 
 def find_safe_ops(privacy_pol, sameas):
     """
@@ -14,10 +14,13 @@ def find_safe_ops(privacy_pol, sameas):
     """
     ops = []
     for q in privacy_pol.queries:
-        ccomp = q.get_connected_components()
-        print "Connected components: " + str(ccomp)
+        print "\tPrivacy policy query found..."
+        (res_vars, ccomp) = q.get_connected_components()
+        print "\tResult variables for each CC: " + str(res_vars)
+        print "\tConnected components: " + str(ccomp)
+        cc_ind = 0
         for g_c in ccomp:
-            print "\tPrivacy policy query found..."
+            print "\t\tConnected Component found in privacy policy query..."
             ind_l = {}
             ind_v = {}
             for c in g_c:
@@ -25,19 +28,19 @@ def find_safe_ops(privacy_pol, sameas):
                 (s,p,o) = decompose_triple(c)
                 if (type(s) == variable.Var) or (':' in s):
                     if (type(s) == variable.Var):
-                        s = str(s)[1:]
+                        s = var_to_str(s)
                     if not s in ind_v:
                         ind_v[s] = set()
                     ind_v[s].add(c)
                 if (type(p) == variable.Var) or (':' in p):
                     if (type(p) == variable.Var):
-                        p = str(p)[1:]
+                        p = var_to_str(p)
                     if not p in ind_v:
                         ind_v[p] = set()
                     ind_v[p].add(c)
                 if (type(o) == variable.Var) or (':' in o):
                     if (type(o) == variable.Var):
-                        o = str(o)[1:]
+                        o = var_to_str(o)
                     if not o in ind_v:
                         ind_v[o] = set()
                     ind_v[o].add(c)
@@ -46,19 +49,18 @@ def find_safe_ops(privacy_pol, sameas):
                         ind_l[o] = set()
                     ind_l[o].add(c)
             # First operation: critical vars and IRIs replaced by blanks
-            v_crit = set([v[1:] for v in q.select])
+            v_crit = set(res_vars[cc_ind])
             for v,g in ind_v.iteritems():
                 if len(g) > 1:
                     v_crit.add(v)
             if v_crit:
-                print("Critical variables and IRIs: " + str(v_crit))
+                print("\t\tCritical variables and IRIs: " + str(v_crit))
             g_prime = g_c
             g_sec = g_c
             b_index = 0
             v_index = 0
             for v in v_crit:
-                if not ":" in v:
-                    v = '?' + v
+                v = var_to_str(v)
                 if sameas:
                     g_prime_post = []
                     g_sec_post = []
@@ -107,4 +109,5 @@ def find_safe_ops(privacy_pol, sameas):
             if len(q.select) == 0:
                 # case of a boolean query: pick the first triple and delete it
                 ops.append(Operation([c], None, q.where))
+            cc_ind += 1
     return ops

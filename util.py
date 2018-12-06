@@ -11,21 +11,29 @@ def enable_print():
     """Enable print for debugging"""
     sys.stdout = sys.__stdout__
 
+def str_to_var(s):
+    """Transform a textual RDF variable to a 'unification' Var"""
+    return var(s[1:])
+
+def var_to_str(v):
+    """Transform an 'unification' Var object to an RDF variable string"""
+    return '?'+str(v)[1:]
+
 def decompose_triple(t):
     """Extract the three parts of an RDF triple string"""
     s_str = t.split(" ")[0]
     p_str = t.split(" ")[1]
     o_str = t.split(" ")[2]
     if s_str[0] == '?':
-        s = var(s_str[1:])
+        s = str_to_var(s_str)
     else:
         s = s_str
     if p_str[0] == '?':
-        p = var(p_str[1:])
+        p = str_to_var(p_str)
     else:
         p = p_str
     if o_str[0] == '?':
-        o = var(o_str[1:])
+        o = str_to_var(o_str)
     else:
         o = o_str
 

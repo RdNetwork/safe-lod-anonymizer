@@ -1,6 +1,6 @@
 import xml.etree.ElementTree
 from prefix import Prefix
-from util import decompose_triple, get_connected_group, get_all_connected_groups
+from util import decompose_triple, get_connected_group, get_all_connected_groups, var_to_str
 from unification import var,variable
 import fyzz
 
@@ -94,18 +94,25 @@ class Query(object):
                 graph_dic[s].add(o)
             except KeyError:
                 graph_dic[s] = {o}
-        print graph_dic
         components = get_all_connected_groups(graph_dic)
 
         res_components = []
+        res_vars = []
         res_ind = 0
         for c in components:
+            res_vars.append(set()) 
             res_components.append([]) 
             for t in self.where:
-                (s,_,o) = decompose_triple(t)
+                (s,p,o) = decompose_triple(t)
                 if s in c and o in c:
+                    if var_to_str(s) in self.select:
+                        res_vars[res_ind].add(var_to_str(s))
+                    if var_to_str(p) in self.select:
+                        res_vars[res_ind].add(var_to_str(p))
+                    if var_to_str(o) in self.select:
+                        res_vars[res_ind].add(var_to_str(o))  
                     res_components[res_ind].append(t)
             res_ind += 1
             
 
-        return res_components
+        return res_vars, res_components
