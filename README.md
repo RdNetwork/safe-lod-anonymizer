@@ -78,10 +78,10 @@ The demo mode also accepts policies written as text files. Policies have to be s
 in the ```/conf/workload/policies``` folder and named adequatly: ```p*.rq``` where *
 ranges from 1 to the number of privacy queries + 1.
 
-To run this "textual demo mode", for example with a policy featuring two queries, run the following:
+To run this "textual mode", for example with a policy featuring two queries, run the following:
 
 ```bash
-python main.py 2 -d
+python main.py 2 -txt
 ```
 
 Two example policy files are provided, using a similar example to the standard
