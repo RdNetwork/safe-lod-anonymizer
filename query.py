@@ -19,7 +19,10 @@ class Query(object):
         select_str = "SELECT "
         for var in self.select:
             select_str += var + " "
-        return select_str + "WHERE { " + ' '.join(self.where) + "}"
+        filter_str = ""
+        if self.filt:
+            filter_str = "FILTER " + self.filt
+        return select_str + "WHERE { " + ' '.join(self.where) + "\n" + filter_str + " }"
 
 
     def evaluate(self, graph, prefixes):
@@ -33,7 +36,7 @@ class Query(object):
         select_str += "\n"
 
         return graph.query(Prefix.writePrefixes(prefixes, "SPARQL") + select_str +
-                           "WHERE { " + '\n'.join(self.where) + "}" +
+                           "WHERE { " + '\n'.join(self.where) + "\n" +
                            "FILTER { " + self.filt.serialize(format="trig") + "}")
 
 

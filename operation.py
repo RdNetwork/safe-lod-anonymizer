@@ -23,8 +23,10 @@ class Operation(object):
         res = "\n\tDELETE { " + ' '.join(self.del_head)  + "} \n"
         if self.upd_head:
             res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
-        res = res + "\tWHERE { " + ' '.join(self.body) + "\n"
-        res = res + "\tFILTER (" + self.filter  + ") }"
+        res = res + "\tWHERE { " + ' '.join(self.body)
+        if self.filter:
+            res = res + "\n\t\tFILTER (" + self.filter  + ")"
+        res = res + " }"
         return res
 
     def __repr__(self):

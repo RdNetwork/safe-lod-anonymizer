@@ -113,6 +113,10 @@ def main():
             outfile.write(str(o))
             outfile.close()
         
+        with open('./out/stats.txt', 'a+') as outfile:
+            outfile.write(str(len(o))+"\n")
+            outfile.close()
+
         # WIP: Graph anonymization
         if o and not TEST:    
             # Import graph

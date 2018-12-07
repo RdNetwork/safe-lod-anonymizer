@@ -55,30 +55,17 @@ def find_safe_ops(privacy_pol, sameas):
                     v_crit.add(v)
             if v_crit:
                 print("\t\tCritical variables and IRIs: " + str(v_crit))
-            g_prime = g_c
-            g_sec = g_c
             b_index = 0
             v_index = 0
             for v in v_crit:
-                print "VAR!"
                 #v = var_to_str(v)
                 if sameas:
-                    g_prime_post = []
-                    g_sec_post = []
-                    for i_t in range(len(q.where)):
-                        t = q.where[i_t]
-                        t_prime = g_prime[i_t]
-                        t_sec = g_sec[i_t]
-                        # For G' : replace v by a fresh unique blank in t
-                        t_int = t_prime.replace(v+" ","[] ")
-                        g_prime_post.append(t_int.replace(" "+v," []"))
-                        # For G'' : replace v by a fresh var in t
-                        t_int = t_sec.replace(v+" ","?var"+str(v_index)+" ")
-                        v_index += 1
-                        g_sec_post.append(t_int.replace(" "+v," ?var"+str(v_index)))
-                        v_index += 1
-                    g_prime = g_prime_post
-                    g_sec = g_sec_post
+                    for t in ind_v[v]:
+                        t_int = t.replace(v+" ","[] ")
+                        t_prime = t_int.replace(" "+v," []")
+                        t_sec_int = t.replace(v+" ","?var"+str(v_index)+" ")
+                        t_sec = t_sec_int.replace(" "+v," ?var"+str(v_index))
+                        ops.append(Operation([t_sec], [t_prime], [t_sec], "!isBlank("+v+")"))
                 else:
                     for x in list(powerset(ind_v[v]))[::-1]:
                         print "Considered subgraph:" + str(x)
@@ -89,8 +76,6 @@ def find_safe_ops(privacy_pol, sameas):
                             x_post.append(t_int.replace(" "+v," _:b"+str(b_index)))
                         ops.append(Operation(x, x_post, x, "!isBlank("+v+")"))
                 b_index += 1
-            if sameas:
-                ops.append(Operation(g_sec, g_prime, g_sec))
 
             # Second operation: triples with critical literals deleted
             g_prime = []
