@@ -20,7 +20,7 @@ def find_safe_ops(privacy_pol, sameas):
         print "\tConnected components: " + str(ccomp)
         cc_ind = 0
         for g_c in ccomp:
-            print "\t\tConnected Component found in privacy policy query..."
+            print "\t\tConnected component found in privacy policy query..."
             ind_l = {}
             ind_v = {}
             for c in g_c:
@@ -32,12 +32,6 @@ def find_safe_ops(privacy_pol, sameas):
                     if not s in ind_v:
                         ind_v[s] = 0
                     ind_v[s] += 1
-                # if (type(p) == variable.Var) or (':' in p):
-                #     if (type(p) == variable.Var):
-                #         p = var_to_str(p)
-                #     if not p in ind_v:
-                #         ind_v[p] = 0
-                #     ind_v[p].add(c)
                 if (type(o) == variable.Var) or (':' in o):
                     if (type(o) == variable.Var):
                         o = var_to_str(o)
@@ -55,13 +49,12 @@ def find_safe_ops(privacy_pol, sameas):
                     v_crit.add(v)
             if v_crit:
                 print("\t\tCritical variables and IRIs: " + str(v_crit))
-            b_index = 0
             v_index = 0
             
             #v = var_to_str(v)
             if sameas:
-                for v in v_crit:
-                    for t in g_c:
+                for t in g_c:
+                    for v in v_crit:
                         t_int = t.replace(v+" ","[] ")
                         t_prime = t_int.replace(" "+v," []")
                         t_sec_int = t.replace(v+" ","?var"+str(v_index)+" ")
@@ -69,16 +62,32 @@ def find_safe_ops(privacy_pol, sameas):
                         ops.append(Operation([t_sec], [t_prime], [t_sec], "!isBlank("+v+")"))
             else:
                 g_x = list(powerset(g_c))[::-1]
-                for v in v_crit:
-                    for x in g_x:
-                        print "Considered subgraph:" + str(x)
+                for x in g_x:
+                    b_index = 0
+                    print "Considered subgraph:" + str(x)
+                    x_prime = x
+                    x_bar_prime = set()
+                    for t in x:
+                        (s,p,o) = decompose_triple(c)
+                        if s in v_crit:
+                            x_bar_prime.add(s)
+                        if p in v_crit:
+                            x_bar_prime.add(p)
+                        if o in v_crit:
+                            x_bar_prime.add(o)
+                    for v in x_bar_prime:
                         x_post = []
-                        for t in x:
+                        for t in x_prime:
                             # Replace v by blank in t
                             t_int = t.replace(v+" ","_:b"+str(b_index)+" ")
                             x_post.append(t_int.replace(" "+v," _:b"+str(b_index)))
-                        ops.append(Operation(x, x_post, x, "!isBlank("+v+")"))
-            b_index += 1
+                        x_prime = x_post
+                        b_index += 1
+                    res = []
+                    for v in x_bar_prime:
+                        res.append("!isBlank("+v+")")
+                    ops.append(Operation(x, x_prime, x, " && ".join(res)))
+                
 
             # Second operation: triples with critical literals deleted
             g_prime = []

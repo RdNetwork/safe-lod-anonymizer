@@ -40,8 +40,11 @@ def main():
     DEMO = False            #Demo mode: fixed gmark policies, simple example
     DEMO_TXT = False        #Textual mode: import queries from text files rather than gmark output
     SAMEAS = False          #Safety modulo sameas : when True, also prevent inference by explicit sameAs links
+    NOPRINT = False         #Print mode: if False, no console output
 
-
+    if "-p" in sys.argv:
+        print "Running in experiment mode: No text output..."
+        NOPRINT = True
     if "-s" in sys.argv:
         print "Running in strong mode: anonymization modulo sameas..."
         SAMEAS = True
@@ -56,11 +59,14 @@ def main():
     else:
         p_pol_size = int(sys.argv[1])
     
-    if "-t" in sys.argv[2:]:
+    if "-t" in sys.argv:
         print "Running in test mode: no graph anonymisation after computing sequences."
         TEST = True
 
     NB_EXPERIMENTS = 1
+
+    if NOPRINT:
+        block_print()
 
     # Fetching gmark queries
     # DEMO uses a simple workload with 2 short queries.
@@ -78,8 +84,8 @@ def main():
             p_pol = Policy([workload[0], workload[1]], "P")
             p_pol_nums = [0, 1]
         elif DEMO_TXT:
-            p_pol = Policy([workload[i] for i in range(p_pol_size)], "P")
-            p_pol_nums = range(p_pol_size)
+            p_pol = Policy([workload[i] for i in (range(p_pol_size-1))], "P")
+            p_pol_nums = range(p_pol_size-1)
         else:
             # Creating random seed...
             seed = random.randrange(sys.maxsize)
