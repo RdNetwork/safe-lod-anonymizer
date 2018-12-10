@@ -1,5 +1,5 @@
 PREFIX vcard: <http://www.w3.org/2001/vcard-rdf/3.0#>
-PREFIX tcl: <http://example.com>
+PREFIX tcl: <http://example.com#>
 SELECT ?ad
 WHERE {
 	?u	a	tcl:User.

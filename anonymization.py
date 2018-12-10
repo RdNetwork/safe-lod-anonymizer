@@ -30,20 +30,20 @@ def find_safe_ops(privacy_pol, sameas):
                     if (type(s) == variable.Var):
                         s = var_to_str(s)
                     if not s in ind_v:
-                        ind_v[s] = set()
-                    ind_v[s].add(c)
-                if (type(p) == variable.Var) or (':' in p):
-                    if (type(p) == variable.Var):
-                        p = var_to_str(p)
-                    if not p in ind_v:
-                        ind_v[p] = set()
-                    ind_v[p].add(c)
+                        ind_v[s] = 0
+                    ind_v[s] += 1
+                # if (type(p) == variable.Var) or (':' in p):
+                #     if (type(p) == variable.Var):
+                #         p = var_to_str(p)
+                #     if not p in ind_v:
+                #         ind_v[p] = 0
+                #     ind_v[p].add(c)
                 if (type(o) == variable.Var) or (':' in o):
                     if (type(o) == variable.Var):
                         o = var_to_str(o)
                     if not o in ind_v:
-                        ind_v[o] = set()
-                    ind_v[o].add(c)
+                        ind_v[o] = 0
+                    ind_v[o] += 1
                 else:
                     if not o in ind_l:
                         ind_l[o] = set()
@@ -51,23 +51,26 @@ def find_safe_ops(privacy_pol, sameas):
             # First operation: critical vars and IRIs replaced by blanks
             v_crit = set(res_vars[cc_ind])
             for v,g in ind_v.iteritems():
-                if len(g) > 1:
+                if g > 1:
                     v_crit.add(v)
             if v_crit:
                 print("\t\tCritical variables and IRIs: " + str(v_crit))
             b_index = 0
             v_index = 0
-            for v in v_crit:
-                #v = var_to_str(v)
-                if sameas:
-                    for t in ind_v[v]:
+            
+            #v = var_to_str(v)
+            if sameas:
+                for v in v_crit:
+                    for t in g_c:
                         t_int = t.replace(v+" ","[] ")
                         t_prime = t_int.replace(" "+v," []")
                         t_sec_int = t.replace(v+" ","?var"+str(v_index)+" ")
                         t_sec = t_sec_int.replace(" "+v," ?var"+str(v_index))
                         ops.append(Operation([t_sec], [t_prime], [t_sec], "!isBlank("+v+")"))
-                else:
-                    for x in list(powerset(ind_v[v]))[::-1]:
+            else:
+                g_x = list(powerset(g_c))[::-1]
+                for v in v_crit:
+                    for x in g_x:
                         print "Considered subgraph:" + str(x)
                         x_post = []
                         for t in x:
@@ -75,7 +78,7 @@ def find_safe_ops(privacy_pol, sameas):
                             t_int = t.replace(v+" ","_:b"+str(b_index)+" ")
                             x_post.append(t_int.replace(" "+v," _:b"+str(b_index)))
                         ops.append(Operation(x, x_post, x, "!isBlank("+v+")"))
-                b_index += 1
+            b_index += 1
 
             # Second operation: triples with critical literals deleted
             g_prime = []
