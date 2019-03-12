@@ -68,7 +68,8 @@ def find_safe_ops(privacy_pol, sameas):
                     x_prime = x
                     x_bar_prime = set()
                     for t in x:
-                        (s,p,o) = decompose_triple(c)
+                        (s,p,o,_) = t.split(" ")
+                        # (s,p,o) = decompose_triple(t)
                         if s in v_crit:
                             x_bar_prime.add(s)
                         if p in v_crit:
