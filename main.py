@@ -84,7 +84,7 @@ def main():
             p_pol = Policy([workload[0], workload[1]], "P")
             p_pol_nums = [0, 1]
         elif DEMO_TXT:
-            p_pol = Policy([workload[i] for i in (range(p_pol_size-1))], "P")
+            p_pol = Policy([workload[i] for i in (range(p_pol_size))], "P")
             p_pol_nums = range(p_pol_size-1)
         else:
             # Creating random seed...
