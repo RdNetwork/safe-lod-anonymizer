@@ -132,8 +132,10 @@ def main():
 
 
             mutation_nb = 0
-            print "Computing original selectivity..."
-            mutated_p.get_selectivity(th,mutation_nb)
+            if EXP:
+                print "Computing original selectivity..."
+                mutated_p.get_selectivity(th,mutation_nb)
+
             while (mutated_p != None and mutation_nb < NB_MUTATIONS):
                 if not TEST and not DEMO:
                     print "\t\tChosen privacy queries: " + str(p_pol_nums)
@@ -177,7 +179,6 @@ def main():
                     mutation_nb += 1
                     print "Computing selectivity..."
                     mutated_p.get_selectivity(th,mutation_nb)
-                    
                 else:
                     break
 
