@@ -98,7 +98,6 @@ def main():
             p_pol_nums = range(p_pol_size-1)
         else:
 
-
             print "Random generator seed: " + str(seed)
             print "Defining policies:"
             # Create privacy policies
