@@ -6,8 +6,8 @@ from unification import var, Var
 from SPARQLWrapper import SPARQLWrapper, JSON
 from prefix import Prefix
 
-ENDPOINT=ConfigSectionMap("Endpoint")['URL']
-GRAPH_URI=ConfigSectionMap("Graph")['URI']+"/"+ConfigSectionMap("Graph")['Name']+"/"
+ENDPOINT=ConfigSectionMap("Endpoint")['url']
+GRAPH_URI=ConfigSectionMap("Graph")['uri']+"/"+ConfigSectionMap("Graph")['name']+"/"
 
 class Query(object):
     """SPARQL query handling methods"""

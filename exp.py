@@ -7,8 +7,8 @@ import time
 import ConfigParser
 from util import ConfigSectionMap
 
-ENDPOINT=ConfigSectionMap("Endpoint")['URL']
-OLD_GRAPH=ConfigSectionMap("Graph")['URI']+"/"+ConfigSectionMap("Graph")['Name']+"/"
+ENDPOINT=ConfigSectionMap("Endpoint")['url']
+OLD_GRAPH=ConfigSectionMap("Graph")['uri']+"/"+ConfigSectionMap("Graph")['name']+"/"
 NEW_GRAPH=OLD_GRAPH[:-1]+'_anon'
 
 def get_number_triples(sparql, graph):

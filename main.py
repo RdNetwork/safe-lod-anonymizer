@@ -110,13 +110,14 @@ def main():
                 p_pol.queries.append(workload[q_num])
                 p_pol_nums.append(q_num)
 
-        # open('./test_consts.txt', 'w+')
-        for q in p_pol.queries:
-            print q
-            q.get_consts(custom_prefixes(), NB_MUT_THREADS * NB_MUTATIONS)
-            # print q.const_res_set
-            # with open('./test_consts.txt', 'a+') as f:
-            #     f.write(str(q.const_res_set))
+        if EXP:
+            # open('./test_consts.txt', 'w+')
+            for q in p_pol.queries:
+                print q
+                q.get_consts(custom_prefixes(), NB_MUT_THREADS * NB_MUTATIONS)
+                # print q.const_res_set
+                # with open('./test_consts.txt', 'a+') as f:
+                #     f.write(str(q.const_res_set))
 
         past_mutations = []
         consts = []
