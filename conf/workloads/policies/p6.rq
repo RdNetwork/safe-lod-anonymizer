@@ -1,0 +1,11 @@
+PREFIX datex: <http://vocab.datex.org/terms#>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX tcl: <http://localhost/>
+SELECT ?nom ?prenom ?dateFinAbo
+WHERE {
+	?user a tcl:User .
+	?user foaf:givenName ?nom .
+	?user foaf:familyName ?prenom .
+	?user datex:subscription ?tabDate .
+	?tabDate datex:subscriptionStopTime ?dateFinAbo .
+}

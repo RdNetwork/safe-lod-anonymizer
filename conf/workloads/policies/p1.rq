@@ -1,7 +1,5 @@
-PREFIX vcard: <http://www.w3.org/2001/vcard-rdf/3.0#>
-PREFIX tcl: <http://example.com#>
-SELECT ?ad
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+SELECT ?user ?nom
 WHERE {
-	?u	a	tcl:User.
-	?u	vcard:hasAddress	?ad.
+	?user foaf:givenName ?nom .
 }

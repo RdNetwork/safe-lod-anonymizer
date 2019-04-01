@@ -1,9 +1,5 @@
-PREFIX geo: <https://www.w3.org/2003/01/geo/wgs84_pos#>
-PREFIX tcl: <http://example.com>
-SELECT ?u ?lat ?long
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+SELECT ?user ?prenom
 WHERE {
-	?c	a	tcl:Journey.
-	?c	tcl:user	?u.				
-	?c	geo:latitude ?lat.
-	?c	geo:longitude	?long.
+	?user foaf:familyName ?prenom .
 }

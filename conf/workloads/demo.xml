@@ -47,7 +47,7 @@
   </head>
   <bodies>
     <body>
-      <conjunct src="?c" trg="tcl:Journey">
+      <conjunct src="?c" trg="tcl:Validation">
       <disj>
         <concat>
           <symbol>rdf:type</symbol>
@@ -134,7 +134,7 @@
   </head>
   <bodies>
     <body>
-      <conjunct src="?c" trg="tcl:Journey">
+      <conjunct src="?c" trg="tcl:Validation">
       <disj>
         <concat>
           <symbol>rdf:type</symbol>
