@@ -55,6 +55,7 @@ def find_safe_ops(privacy_pol, sameas):
             if sameas:
                 for t in g_c:
                     for v in v_crit:
+                        print v
                         t_int = t.replace(v+" ","[] ")
                         t_prime = t_int.replace(" "+v," []")
                         t_sec_int = t.replace(v+" ","?var"+str(v_index)+" ")
@@ -64,11 +65,17 @@ def find_safe_ops(privacy_pol, sameas):
                 g_x = list(powerset(g_c))[::-1]
                 for x in g_x:
                     b_index = 0
-                    print "Considered subgraph:" + str(x)
+                    #print "Considered subgraph:" + str(x)
                     x_prime = x
                     x_bar_prime = set()
                     for t in x:
-                        (s,p,o,_) = t.split(" ")
+                        if '"' in t:
+                            (_,o,_) = t.split('"') 
+                            o = '"' + o + '"'
+                            s = t.split(" ")[0]
+                            p = t.split(" ")[1]
+                        else:
+                            (s,p,o,_) = t.split(" ")
                         # (s,p,o) = decompose_triple(t)
                         if s in v_crit:
                             x_bar_prime.add(s)

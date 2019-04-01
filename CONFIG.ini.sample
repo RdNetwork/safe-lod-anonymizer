@@ -1,0 +1,6 @@
+[Endpoint]
+ENDPOINT: http://your.endpoint:port/sparql/
+
+[Graph]
+GRAPH_URI: http://example.domain/
+GRAPH_NAME: graph

@@ -25,7 +25,7 @@ class Operation(object):
             res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
         res = res + "\tWHERE { " + ' '.join(self.body)
         if self.filter:
-            res = res + "\n\t\tFILTER (" + self.filter  + ")"
+            res = res + "\n\t\t FILTER (" + self.filter  + ")"
         res = res + " }"
         return res
 

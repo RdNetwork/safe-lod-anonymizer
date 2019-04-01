@@ -5,42 +5,32 @@ import os
 import sys
 import csv
 import time
+import copy
+import glob
+from exp import run_eval
 from rdflib import Graph
 from policy import Policy
 from query import Query
 from anonymization import find_safe_ops
 from prefix import Prefix
-from util import block_print, enable_print, average_wl_size
+from util import block_print, enable_print, average_wl_size, custom_prefixes
 
 GMARK_QUERIES = 500
-
-def custom_prefixes():
-    "Generating RDF prefixes used in our framework."
-    p = []
-    p.append(Prefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#"))
-    p.append(Prefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#"))
-    p.append(Prefix("owl", "http://www.w3.org/2002/07/owl#"))
-    p.append(Prefix("xsd", "http://www.w3.org/2001/XMLSchema#"))
-    p.append(Prefix("dc", "http://purl.org/dc/elements/1.1/"))
-    p.append(Prefix("dcterms", "http://purl.org/dc/terms/"))
-    p.append(Prefix("foaf", "http://xmlns.com/foaf/0.1/"))
-    p.append(Prefix("geo", "http://www.w3.org/2003/01/geo/wgs84_pos#"))
-    p.append(Prefix("datex", "http://vocab.datex.org/terms#"))
-    p.append(Prefix("lgdo", "http://linkedgeodata.org/ontology/"))
-    p.append(Prefix("tcl", "http://localhost/"))
-    p.append(Prefix("gld", "http://data.grandlyon.com/"))
-    p.append(Prefix("skos", "http://www.w3.org/2004/02/skos/core#"))
-    p.append(Prefix("gtfs", "http://vocab.gtfs.org/terms#"))
-    return p
-
+NB_EXPERIMENTS = 1
+NB_MUT_THREADS = 10
+NB_MUTATIONS = 14
 
 def main():
     """Main execution function."""
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
     TEST = False            #Test mode: no anonymiation after algorithms execution
     DEMO = False            #Demo mode: fixed gmark policies, simple example
     DEMO_TXT = False        #Textual mode: import queries from text files rather than gmark output
     SAMEAS = False          #Safety modulo sameas : when True, also prevent inference by explicit sameAs links
     NOPRINT = False         #Print mode: if False, no console output
+    EXP = False             #Experiments mode: creating mutations of the initial policy and running alg. for each
 
     if "-p" in sys.argv:
         print "Running in experiment mode: No text output..."
@@ -56,6 +46,19 @@ def main():
         print "Running in demo mode: simple fixed privacy policy used."
         DEMO = True
         p_pol_size = 2
+    if "-exp" in sys.argv:
+        print "Running in experiments mode: creating combinations of edited policies"
+        EXP = True
+        TEST = True
+        for f in glob.glob("./out/ops/*.txt"):
+            os.remove(f)
+        for f in glob.glob("./out/results/*.csv"):
+            os.remove(f)
+        for f in glob.glob("./out/policies/*.txt"):
+            os.remove(f)
+        with open("./out/results/selectivity.csv","w+") as f:
+            f.write("Thread,Mutation,Selectivity\n")    
+
     else:
         p_pol_size = int(sys.argv[1])
     
@@ -63,7 +66,10 @@ def main():
         print "Running in test mode: no graph anonymisation after computing sequences."
         TEST = True
 
-    NB_EXPERIMENTS = 1
+    # for nb_th in range(0,NB_MUT_THREADS):
+    #     open('./out/policies/thr'+str(nb_th)+'.txt', 'w').close()
+    #     for nb_mut in range(0, NB_MUTATIONS):
+    #         open('./out/ops/thr'+str(nb_th)+'_mut'+str(nb_mut)+'.txt', 'w').close()
 
     if NOPRINT:
         block_print()
@@ -78,6 +84,10 @@ def main():
     else:
         workload = Query.parse_gmark_queries("./conf/workloads/star-starchain-workload.xml")
 
+    # Creating random seed...
+    seed = 12345 # random.randrange(sys.maxsize)
+    random.seed(seed)
+
     for _ in range(0, NB_EXPERIMENTS):
 
         if DEMO:
@@ -87,9 +97,7 @@ def main():
             p_pol = Policy([workload[i] for i in (range(p_pol_size))], "P")
             p_pol_nums = range(p_pol_size-1)
         else:
-            # Creating random seed...
-            seed = random.randrange(sys.maxsize)
-            random.seed(seed)
+
 
             print "Random generator seed: " + str(seed)
             print "Defining policies:"
@@ -102,57 +110,111 @@ def main():
                 p_pol.queries.append(workload[q_num])
                 p_pol_nums.append(q_num)
 
-        print "\t\tChosen privacy queries: " + str(p_pol_nums)
-        p_size = 0
-        for i in range(0, p_pol_size):
-            p_size += len(p_pol.queries[i].where)
-            print "\t\t" + str(p_pol.queries[i])
+        # open('./test_consts.txt', 'w+')
+        for q in p_pol.queries:
+            print q
+            q.get_consts(custom_prefixes(), NB_MUT_THREADS * NB_MUTATIONS)
+            # print q.const_res_set
+            # with open('./test_consts.txt', 'a+') as f:
+            #     f.write(str(q.const_res_set))
 
-        # Run algorithm
-        print "Computing candidate operations..."
-        o = find_safe_ops(p_pol, SAMEAS)
-        print "Set of operations found:"
-        print(o)
-        
-        # Writing operations to result files
-        with open('./out/ops.txt', 'w+') as outfile:
-            outfile.write(str(o))
-            outfile.close()
-        
-        with open('./out/stats.txt', 'a+') as outfile:
-            outfile.write(str(len(o))+"\n")
-            outfile.close()
+        past_mutations = []
+        consts = []
+        for th in range(0,NB_MUT_THREADS):
+            print "Mutation thread number %d..." % th
+            mutated_p = copy.deepcopy(p_pol)
+            if consts != []:
+                # Updating constants already used at each turn
+                # Except on the first iteration
+                for ind_q in range(0,len(mutated_p.queries)):
+                    mutated_p.queries[ind_q].const_res_set = consts[ind_q]
+
+
+            mutation_nb = 0
+            print "Computing original selectivity..."
+            mutated_p.get_selectivity(th,mutation_nb)
+            while (mutated_p != None and mutation_nb < NB_MUTATIONS):
+                if not TEST and not DEMO:
+                    print "\t\tChosen privacy queries: " + str(p_pol_nums)
+                p_size = 0
+                for i in range(0, p_pol_size):
+                    p_size += len(mutated_p.queries[i].where)
+                    print "\t\t" + str(mutated_p.queries[i])
+
+                # Run algorithm
+                print "\tComputing candidate operations..."
+                o = find_safe_ops(mutated_p, SAMEAS)
+                #print "Set of operations found:"
+                #print(o)
+                
+                # Writing operations to result files
+                with open('./out/ops/thr'+str(th)+'_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
+                    outfile.write(str(o))
+                
+                #with open('./out/stats_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
+                #   outfile.write(str(len(o))+"\n")
+
+                with open('./out/policies/thr'+str(th)+'.txt', 'a+') as outfile:
+                        outfile.write(str(mutated_p)+"\n")
+
+                if EXP:
+                    # Mutating policy
+                    past_mutations.append(copy.deepcopy(mutated_p))
+                    print "Old policy: " + str(mutated_p)
+                    tries = 0   # If after a certain number of randomly generated mutations we can't find a new policy mutation, we stop
+                    while (mutated_p in past_mutations and tries < 20):
+                        print "Mutation try number %d..." % tries
+                        consts = mutated_p.mutate_policy()
+                        tries += 1
+                        if mutated_p in past_mutations:
+                            print "Missed try: this mutation was already considered earlier"
+                        
+                    if tries == 20:
+                        print "Too many unsuccessful mutation tries. Exiting mutation computing..."
+                        break
+
+                    mutation_nb += 1
+                    print "Computing selectivity..."
+                    mutated_p.get_selectivity(th,mutation_nb)
+                    
+                else:
+                    break
 
         # WIP: Graph anonymization
         if o and not TEST:    
-            # Import graph
-            print "Importing graph..."
-            g = Graph()
-            with open("./conf/graphs/graph.ttl", "r") as f:
-                g.parse(file=f, format="turtle")
-            print str(len(g)) + " triples found"
+                # Import graph
+                print "Importing graph..."
+                g = Graph()
+                with open("./conf/graphs/graph.ttl", "r") as f:
+                    g.parse(file=f, format="turtle")
+                print str(len(g)) + " triples found"
 
-            print "A set of " + str(len(o)) + " operations was found."
-            choice = ''
-            while not (choice == 'Y' or choice == 'N'):
-                choice = raw_input('Apply anonymization? Y/N (case-sensitive): ')
+                print "A set of " + str(len(o)) + " operations was found."
+                choice = ''
+                while not (choice == 'Y' or choice == 'N'):
+                    choice = raw_input('Apply anonymization? Y/N (case-sensitive): ')
 
-            # Perform anonymization
-            if choice == 'Y':
-                if not os.path.exists("./out/"):
-                    os.makedirs("./out/")
-                print "Anonymizing graph..."
-                g.serialize(destination='./out/output_anonymized_orig_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl', 
-                            format='trig')
-                print "\tOperation " + str(choice) + " launched..."
-                seq_step = 0
-                for op in o:
-                    seq_step += 1
-                    op.update(g, custom_prefixes())
-                    g.serialize(destination='./out/output_anonymized_step'+str(seq_step)+'_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl',                         format='trig')
-                print "\tLength after deletion: " + str(len(g)) + " triples"
-            else:
-                print "Terminating program..."
+                # Perform anonymization
+                if choice == 'Y':
+                    if not os.path.exists("./out/"):
+                        os.makedirs("./out/")
+                    print "Anonymizing graph..."
+                    g.serialize(destination='./out/output_anonymized_orig_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl', 
+                                format='trig')
+                    print "\tOperation " + str(choice) + " launched..."
+                    seq_step = 0
+                    for op in o:
+                        seq_step += 1
+                        op.update(g, custom_prefixes())
+                        g.serialize(destination='./out/output_anonymized_step'+str(seq_step)+'_'+time.strftime("%Y%m%d-%H%M%S")+'.ttl', format='trig')
+                    print "\tLength after deletion: " + str(len(g)) + " triples"
+                else:
+                    print "Terminating program..."
+
+        # Stat calculation
+        if EXP:
+            print "Launching experimental evaluation..."
+            run_eval(NB_MUT_THREADS, NB_MUTATIONS)
 
 if __name__ == "__main__":
     main()
