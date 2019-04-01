@@ -32,10 +32,12 @@ execute the code yourself on our example graph schema.
 This project uses Python and should work on any version of Python 3 and any
 version of Python starting from Python 2.7. You must install the following Python
 libraries to be able to run this program:
-*[rdflib](https://github.com/RDFLib/rdflib)
-*[unification](https://pypi.python.org/pypi/unification/0.2.2)
-*[yapps](https://github.com/smurfix/yapps)
-*[fyzz](https://pypi.org/project/fyzz/)
+
+* [rdflib](https://github.com/RDFLib/rdflib)
+* [unification](https://pypi.python.org/pypi/unification/0.2.2)
+* [yapps](https://github.com/smurfix/yapps)
+* [fyzz](https://pypi.org/project/fyzz/)
+* [SPARQLWrapper](https://rdflib.github.io/sparqlwrapper/)
 
 The query workload is created using [gMark](https://github.com/graphMark/gmark),
 which uses an XML configuration file to generate graphs and queries. You can follow

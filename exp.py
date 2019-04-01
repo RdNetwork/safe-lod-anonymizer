@@ -6,8 +6,6 @@ import SPARQLWrapper
 import time
 import ConfigParser
 from util import ConfigSectionMap
-from pymantic import sparql
-
 
 ENDPOINT=ConfigSectionMap("Endpoint")['URL']
 OLD_GRAPH=ConfigSectionMap("Graph")['URI']+"/"+ConfigSectionMap("Graph")['Name']+"/"
