@@ -12,6 +12,7 @@ from unification import var, Var
 def ConfigSectionMap(section):
     """From https://wiki.python.org/moin/ConfigParserExamples"""
     Config = ConfigParser.ConfigParser()
+    Config.read("CONFIG.ini")
     dict1 = {}
     options = Config.options(section)
     for option in options:
