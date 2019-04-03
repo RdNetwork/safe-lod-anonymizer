@@ -1,7 +1,10 @@
 from query import Query
-from exp import ENDPOINT, OLD_GRAPH
+from util import ConfigSectionMap
 import SPARQLWrapper
 import random
+
+ENDPOINT=ConfigSectionMap("Endpoint")['url']
+OLD_GRAPH=ConfigSectionMap("Graph")['uri']+ConfigSectionMap("Graph")['name']+"/"
 
 class Policy():
     """Class for handling Policy objects"""
@@ -36,7 +39,7 @@ class Policy():
             # Compute mutated policy's selectivity on the original graph   
             nb_res = 0
             for q in self.queries:
-                q_str = "WITH <http://localhost/"+OLD_GRAPH+"/> " + q.str_count()
+                q_str = "DEFINE sql:log-enable 3 WITH <"+OLD_GRAPH+"> " + q.str_count()
                 sparql.setQuery(q_str)
                 sparql.setReturnFormat(SPARQLWrapper.JSON)
                 sparql.queryType = SPARQLWrapper.SELECT

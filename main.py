@@ -215,7 +215,7 @@ def main():
         # Stat calculation
         if EXP:
             print "Launching experimental evaluation..."
-            run_eval(NB_MUT_THREADS, NB_MUTATIONS)
+            run_eval(NB_MUT_THREADS, NB_MUTATIONS,True,False)
 
 if __name__ == "__main__":
     main()

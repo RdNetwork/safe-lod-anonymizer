@@ -147,7 +147,7 @@ class Query(object):
         for v in var_set:
             v = var_to_str(v)
             print "\tRunning query for "+ str(v) + "..."
-            query_str = Prefix.writePrefixes(prefixes, "SPARQL") + " " \
+            query_str = "DEFINE sql:log-enable 3 \n" + Prefix.writePrefixes(prefixes, "SPARQL") + " " \
                 "SELECT "+v+", COUNT(*) AS ?nb " + \
                 "FROM <"+GRAPH_URI+"> " + \
                 "WHERE { " + ' '.join(self.where) + "} " + \
