@@ -22,7 +22,8 @@ def get_number_triples(sparql, graph):
 def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
 
     sparql = SPARQLWrapper.SPARQLWrapper(ENDPOINT)
-
+    sparql.setTimeout(2000)
+    
     if prec_chk:
         old_quantity = get_number_triples(sparql, OLD_GRAPH)
         print "\tGetting number of IRIs in the original graph..."
