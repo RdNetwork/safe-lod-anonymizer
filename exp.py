@@ -19,8 +19,92 @@ def get_number_triples(sparql, graph):
     results = sparql.query().convert()   
     return int(results["results"]["bindings"][0]["triples"]["value"])
 
-def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
 
+# def run_eval_alt(nb_threads, nb_mutations, deg_chk, prec_chk):
+#     """Alternative experimental process (more graph creations but with small graphs)"""
+#     sparql = SPARQLWrapper.SPARQLWrapper(ENDPOINT)
+#     sparql.setTimeout(2000)
+    
+#     if prec_chk:
+#         old_quantity = get_number_triples(sparql, OLD_GRAPH)
+#         print "\tGetting number of IRIs in the original graph..."
+#         nb_iris = get_IRIs(sparql, OLD_GRAPH)
+#         print "\tGetting number of blank nodes in the original graph..."
+#         nb_blanks = get_IRIs(sparql, OLD_GRAPH, True)
+#         with open("./out/results/precision.csv", "w+") as f:
+#             f.write("Thread,Mutation,Precision,PrecSuppr,PrecGen\n")
+
+#     for nb_th in range(0,nb_threads):
+#         for nb_mut in range(0, nb_mutations):
+#             with open("./out/ops/thr"+str(nb_th)+"_mut"+str(nb_mut)+".txt") as f: 
+#                 clean_file = f.read().replace('\n', '').replace('\t', '')
+#                 ops = clean_file.split(",")
+#                 # Removing starting and ending brackets
+#                 ops[0] = ops[0][1:]
+#                 ops[-1] = ops[-1][:-1]
+#                 sparql.setMethod(SPARQLWrapper.POST)
+#                 print "Sequence of operations for mutation"+str(nb_mut)+" in thread "+str(nb_th)+"..."
+#                 sum_del = 0
+#                 sum_upd = 0
+#                 for op in ops:
+#                     # Dropping graphs if they already exist
+#                     sparql.setQuery('DEFINE sql:log-enable 3 DROP SILENT GRAPH <'+OLD_GRAPH+'_del_'+nb_th+'_'+nb_mut+'>')
+#                     sparql.queryType = SPARQLWrapper.SELECT
+#                     sparql.query()
+#                     sparql.setQuery('DEFINE sql:log-enable 3 DROP SILENT GRAPH <'+OLD_GRAPH+'_add_'+nb_th+'_'+nb_mut+'>')
+#                     sparql.queryType = SPARQLWrapper.SELECT
+#                     sparql.query()
+
+#                     # Creating annex graphs
+#                     print "Creating graph to store new triples..."
+#                     sparql.setQuery('DEFINE sql:log-enable 3 COPY GRAPH <'+OLD_GRAPH+'> to GRAPH <'+NEW_GRAPH+"_"+TIMESTAMP+'/>')
+#                     sparql.queryType = SPARQLWrapper.SELECT
+#                     sparql.query()
+#                     print "Creating graph to store new triples..."
+#                     sparql.setQuery('DEFINE sql:log-enable 3 COPY GRAPH <'+OLD_GRAPH+'> to GRAPH <'+NEW_GRAPH+"_"+TIMESTAMP+'/>')
+#                     sparql.queryType = SPARQLWrapper.SELECT
+#                     sparql.query()
+
+#                     print "Applying operation ("+str(sum_del)+" triples deleted so far)..."
+#                     sparql.setMethod(SPARQLWrapper.POST)
+#                     sparql.setQuery("DEFINE sql:log-enable 3 WITH <"+NEW_GRAPH+"_"+TIMESTAMP+"/> " + op)
+#                     sparql.setReturnFormat(SPARQLWrapper.JSON)
+#                     sparql.queryType = SPARQLWrapper.SELECT
+#                     results = sparql.query().convert()
+
+#                     msg = results["results"]["bindings"][0]['callret-0']['value']
+#                     print msg
+#                     m = re.search(r".* (?P<del>\d+) .* (?P<ins>\d+) .*", msg)
+#                     del_tot = m.group('del')
+#                     ins_tot = m.group('ins')
+
+#                     # Compute number of deleted and replaced triples in this sequence
+#                     sum_upd += int(ins_tot)
+#                     del_trips = int(del_tot) - int(ins_tot)
+#                     sum_del += del_trips
+
+#                 if prec_chk:
+#                     # Compute precision
+#                     print "\tGetting number of blank nodes in the new graph..."
+#                     nb_blanks_new = get_IRIs(sparql, NEW_GRAPH+"_"+TIMESTAMP+"/",True)
+#                     alpha = 0.5     # alpha > 0.5 <=> deletions are penalised
+#                     prec_suppr = 1 - (float(sum_del) / float(old_quantity))
+#                     print prec_suppr
+#                     print str(nb_blanks_new) + " blank nodes in the new graph"
+#                     prec_gen = 1 - (float(int(nb_blanks_new) - int(nb_blanks)) / float(nb_iris))
+#                     print prec_gen
+#                     prec = alpha*prec_suppr + (1.0 - alpha)*prec_gen 
+#                     # Write result line
+#                     with open("./out/results/precision.csv", "a+") as f:
+#                         f.write(str(nb_th)+","+str(nb_mut)+","+str(prec)+","+str(prec_suppr)+","+str(prec_gen)+"\n") 
+
+#                 if deg_chk: 
+#                     # Compute degree
+#                     get_degrees(sparql, nb_th, nb_mut, NEW_GRAPH+"_"+TIMESTAMP)
+
+
+def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
+    """Experimental process runner"""
     sparql = SPARQLWrapper.SPARQLWrapper(ENDPOINT)
     sparql.setTimeout(2000)
     

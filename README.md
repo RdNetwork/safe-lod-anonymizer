@@ -7,7 +7,7 @@ it prevents leakages by ensuring that new results for a given set of *privacy qu
 are not created by the union with any other external dataset. This lets us use
 static algorithms which do not depend on an input graph, and are efficient in
 terms of runtime.  
-This framework is part of submission fot the ESWC2019 conference.
+This framework is part of submission for the ISWC2019 conference.
 
 This program currently works by using a previously generated query workload,
 picking a fixed number of random queries in this workload to affect them in a privacy

@@ -81,6 +81,7 @@ class Query(object):
             for wh in fyzz_q.where:
                 wh_str = ""
                 for wh_part in range(0,3):
+                    print str(wh[wh_part]) + ": " + str(type(wh[wh_part]))
                     if type(wh[wh_part]) is fyzz.ast.SparqlVar:
                         wh_str += '?' + wh[wh_part].name + ' '
                     elif type(wh[wh_part]) is fyzz.ast.SparqlLiteral:
@@ -90,6 +91,8 @@ class Query(object):
                             wh_str += "a "
                         else:
                             wh_str += '<' + wh[wh_part][0] + wh[wh_part][1] + '> '
+                    elif type(wh[wh_part]) is str:
+                        wh_str += wh[wh_part] + ' '
                 wh_str += "."
                 q.where.append(wh_str)
             queries.append(q)
@@ -195,7 +198,7 @@ class Query(object):
         #print res_q.const_res_set
         if self.const_res_set[var_to_replace]:
             replacement_value = self.const_res_set[var_to_replace].pop()
-            if ":" in replacement_value:
+            if "://" in replacement_value:
                 replacement_value = "<" + replacement_value + ">"
             else:
                 replacement_value = '"' + replacement_value + '"'
