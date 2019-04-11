@@ -17,8 +17,8 @@ from util import block_print, enable_print, average_wl_size, custom_prefixes
 
 GMARK_QUERIES = 500
 NB_EXPERIMENTS = 1
-NB_MUT_THREADS = 10
-NB_MUTATIONS = 14
+NB_MUT_THREADS = 8
+NB_MUTATIONS = 12
 
 def main():
     """Main execution function."""
@@ -215,7 +215,7 @@ def main():
         # Stat calculation
         if EXP:
             print "Launching experimental evaluation..."
-            run_eval(NB_MUT_THREADS, NB_MUTATIONS,True,False)
+            run_eval(NB_MUT_THREADS, NB_MUTATIONS,True,True)
 
 if __name__ == "__main__":
     main()
