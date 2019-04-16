@@ -31,6 +31,7 @@ def main():
     SAMEAS = False          #Safety modulo sameas : when True, also prevent inference by explicit sameAs links
     NOPRINT = False         #Print mode: if False, no console output
     EXP = False             #Experiments mode: creating mutations of the initial policy and running alg. for each
+    SKIP = False            #Skip mode: jump directly to the experiments
 
     if "-p" in sys.argv:
         print "Running in experiment mode: No text output..."
@@ -46,18 +47,21 @@ def main():
         print "Running in demo mode: simple fixed privacy policy used."
         DEMO = True
         p_pol_size = 2
+    if "--skip" in sys.argv:
+        SKIP = True
     if "-exp" in sys.argv:
         print "Running in experiments mode: creating combinations of edited policies"
         EXP = True
         TEST = True
-        for f in glob.glob("./out/ops/*.txt"):
-            os.remove(f)
-        for f in glob.glob("./out/results/*.csv"):
-            os.remove(f)
-        for f in glob.glob("./out/policies/*.txt"):
-            os.remove(f)
-        with open("./out/results/selectivity.csv","w+") as f:
-            f.write("Thread,Mutation,Selectivity\n")    
+        if not SKIP:
+            for f in glob.glob("./out/ops/*.txt"):
+                os.remove(f)
+            for f in glob.glob("./out/results/*.csv"):
+                os.remove(f)
+            for f in glob.glob("./out/policies/*.txt"):
+                os.remove(f)
+            with open("./out/results/selectivity.csv","w+") as f:
+                f.write("Thread,Mutation,Selectivity\n")    
 
     else:
         p_pol_size = int(sys.argv[1])
@@ -110,76 +114,74 @@ def main():
                 p_pol_nums.append(q_num)
 
         if EXP:
-            # open('./test_consts.txt', 'w+')
             for q in p_pol.queries:
                 print q
                 q.get_consts(custom_prefixes(), NB_MUT_THREADS * NB_MUTATIONS)
-                # print q.const_res_set
-                # with open('./test_consts.txt', 'a+') as f:
-                #     f.write(str(q.const_res_set))
 
         past_mutations = []
         consts = []
-        for th in range(0,NB_MUT_THREADS):
-            print "Mutation thread number %d..." % th
-            mutated_p = copy.deepcopy(p_pol)
-            if consts != []:
-                # Updating constants already used at each turn
-                # Except on the first iteration
-                for ind_q in range(0,len(mutated_p.queries)):
-                    mutated_p.queries[ind_q].const_res_set = consts[ind_q]
+
+        if not SKIP:
+            for th in range(0,NB_MUT_THREADS):
+                print "Mutation thread number %d..." % th
+                mutated_p = copy.deepcopy(p_pol)
+                if consts != []:
+                    # Updating constants already used at each turn
+                    # Except on the first iteration
+                    for ind_q in range(0,len(mutated_p.queries)):
+                        mutated_p.queries[ind_q].const_res_set = consts[ind_q]
 
 
-            mutation_nb = 0
-            if EXP:
-                print "Computing original selectivity..."
-                mutated_p.get_selectivity(th,mutation_nb)
-
-            while (mutated_p != None and mutation_nb < NB_MUTATIONS):
-                if not TEST and not DEMO:
-                    print "\t\tChosen privacy queries: " + str(p_pol_nums)
-                p_size = 0
-                for i in range(0, p_pol_size):
-                    p_size += len(mutated_p.queries[i].where)
-                    print "\t\t" + str(mutated_p.queries[i])
-
-                # Run algorithm
-                print "\tComputing candidate operations..."
-                o = find_safe_ops(mutated_p, SAMEAS)
-                #print "Set of operations found:"
-                #print(o)
-                
-                # Writing operations to result files
-                with open('./out/ops/thr'+str(th)+'_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
-                    outfile.write(str(o))
-                
-                #with open('./out/stats_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
-                #   outfile.write(str(len(o))+"\n")
-
-                with open('./out/policies/thr'+str(th)+'.txt', 'a+') as outfile:
-                        outfile.write(str(mutated_p)+"\n")
-
+                mutation_nb = 0
                 if EXP:
-                    # Mutating policy
-                    past_mutations.append(copy.deepcopy(mutated_p))
-                    print "Old policy: " + str(mutated_p)
-                    tries = 0   # If after a certain number of randomly generated mutations we can't find a new policy mutation, we stop
-                    while (mutated_p in past_mutations and tries < 20):
-                        print "Mutation try number %d..." % tries
-                        consts = mutated_p.mutate_policy()
-                        tries += 1
-                        if mutated_p in past_mutations:
-                            print "Missed try: this mutation was already considered earlier"
-                        
-                    if tries == 20:
-                        print "Too many unsuccessful mutation tries. Exiting mutation computing..."
-                        break
-
-                    mutation_nb += 1
-                    print "Computing selectivity..."
+                    print "Computing original selectivity..."
                     mutated_p.get_selectivity(th,mutation_nb)
-                else:
-                    break
+
+                while (mutated_p != None and mutation_nb < NB_MUTATIONS):
+                    if not TEST and not DEMO:
+                        print "\t\tChosen privacy queries: " + str(p_pol_nums)
+                    p_size = 0
+                    for i in range(0, p_pol_size):
+                        p_size += len(mutated_p.queries[i].where)
+                        print "\t\t" + str(mutated_p.queries[i])
+
+                    # Run algorithm
+                    print "\tComputing candidate operations..."
+                    o = find_safe_ops(mutated_p, SAMEAS)
+                    #print "Set of operations found:"
+                    #print(o)
+                    
+                    # Writing operations to result files
+                    with open('./out/ops/thr'+str(th)+'_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
+                        outfile.write(str(o))
+                    
+                    #with open('./out/stats_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
+                    #   outfile.write(str(len(o))+"\n")
+
+                    with open('./out/policies/thr'+str(th)+'.txt', 'a+') as outfile:
+                            outfile.write(str(mutated_p)+"\n")
+
+                    if EXP:
+                        # Mutating policy
+                        past_mutations.append(copy.deepcopy(mutated_p))
+                        print "Old policy: " + str(mutated_p)
+                        tries = 0   # If after a certain number of randomly generated mutations we can't find a new policy mutation, we stop
+                        while (mutated_p in past_mutations and tries < 20):
+                            print "Mutation try number %d..." % tries
+                            consts = mutated_p.mutate_policy()
+                            tries += 1
+                            if mutated_p in past_mutations:
+                                print "Missed try: this mutation was already considered earlier"
+                            
+                        if tries == 20:
+                            print "Too many unsuccessful mutation tries. Exiting mutation computing..."
+                            break
+
+                        mutation_nb += 1
+                        print "Computing selectivity..."
+                        mutated_p.get_selectivity(th,mutation_nb)
+                    else:
+                        break
 
         # WIP: Graph anonymization
         if o and not TEST:    

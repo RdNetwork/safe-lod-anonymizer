@@ -1,3 +1,4 @@
+import re
 from prefix import Prefix
 
 class Operation(object):
@@ -23,6 +24,14 @@ class Operation(object):
         res = "\n\tDELETE { " + ' '.join(self.del_head)  + "} \n"
         if self.upd_head:
             res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
+        res = res + "\tWHERE { " + ' '.join(self.body)
+        if self.filter:
+            res = res + "\n\t\t FILTER (" + self.filter  + ")"
+        res = res + " }"
+        return res
+
+    def count(self):
+        res = "\n\t SELECT COUNT * \n"
         res = res + "\tWHERE { " + ' '.join(self.body)
         if self.filter:
             res = res + "\n\t\t FILTER (" + self.filter  + ")"

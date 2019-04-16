@@ -39,7 +39,7 @@ class Policy():
             # Compute mutated policy's selectivity on the original graph   
             nb_res = 0
             for q in self.queries:
-                q_str = "DEFINE sql:log-enable 3 WITH <"+OLD_GRAPH+"> " + q.str_count()
+                q_str = "DEFINE sql:log-enable 2 WITH <"+OLD_GRAPH+"> " + q.str_count()
                 sparql.setQuery(q_str)
                 sparql.setReturnFormat(SPARQLWrapper.JSON)
                 sparql.queryType = SPARQLWrapper.SELECT
