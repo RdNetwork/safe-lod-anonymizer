@@ -112,7 +112,14 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
                 #     del_trips = int(del_tot) - int(ins_tot)
                 #     sum_del += del_trips
 
-            nb_new_blanks = get_IRIs(sparql, new_upd_graph, True) - get_IRIs(sparql, new_del_graph, True)
+            print "Fetching the number of new blanks..."
+            start = time.time()
+            nb_added = get_IRIs(sparql, new_upd_graph, True)
+            mid = time.time()
+            nb_existing = get_IRIs(sparql, new_del_graph, True)
+            end = time.time()
+            nb_new_blanks = nb_added - nb_existing
+            print "\tDone! (Took " + str(mid-start) + " + " + str(end-mid) + " seconds)"
 
             if prec_chk:
                 # Compute precision
