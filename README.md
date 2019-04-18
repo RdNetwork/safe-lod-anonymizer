@@ -77,7 +77,8 @@ python main.py -d
 ```
 
 The demo mode also accepts policies written as text files. Policies have to be stored
-in the ```/conf/workload/policies``` folder and named adequatly: ```p*.rq``` where *
+in the ```/conf/workload/policies``` folder, placed in a separate folder named using the graph name
+(see ```CONFIG.ini```) and named adequatly: ```p*.rq``` where *
 ranges from 1 to the number of privacy queries + 1.
 
 To run this "textual mode", for example with a policy featuring two queries, run the following:

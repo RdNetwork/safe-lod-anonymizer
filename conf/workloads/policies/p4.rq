@@ -1,5 +1,0 @@
-PREFIX tcl: <http://localhost/>
-SELECT ?user ?dateNaissance
-WHERE {
-	?user tcl:birthday ?dateNaissance .
-}

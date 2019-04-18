@@ -66,7 +66,10 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
             print "Sequence of operations for mutation"+str(nb_mut)+" in thread "+str(nb_th)+"..."
             new_del_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_del"
             new_upd_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"
+            ind_op = 0
             for op in ops:
+                print "\tOp." + ind_op + " out of " + str(len(ops)) + "..."
+                ind_op += 1
                 (del_txt, upd_txt, where_txt) = parse_str_op(op)
                 # Creating graph with deleted triples
                 print "\tComputing deletion graph..."

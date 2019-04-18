@@ -67,7 +67,11 @@ def decompose_triple(t):
     """Extract the three parts of an RDF triple string"""
     s_str = t.split(" ")[0]
     p_str = t.split(" ")[1]
-    o_str = t.split(" ")[2] # !!! doesn't work if string literal with spaces
+    if len(t.split(" ")) > 3:
+        o_str = " ".join(t.split(" ")[2:])
+    else:
+        o_str = t.split(" ")[2]
+
     if s_str[0] == '?':
         s = str_to_var(s_str)
     else:

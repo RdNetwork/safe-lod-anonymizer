@@ -66,7 +66,7 @@ class Query(object):
     @staticmethod
     def parse_txt_queries(p_pol_size):
         """Parses textual policies files to a set of queries"""
-        root_path = "./conf/workloads/policies/"
+        root_path = "./conf/workloads/policies/"+ConfigSectionMap("Graph")['name']
         queries_str = []
         for i in range(1,p_pol_size+1):
             with open(root_path+'p'+str(i)+'.rq', 'r') as f:
@@ -171,7 +171,7 @@ class Query(object):
                 if (ind % 100 == 0):
                     print "\t" + str(ind)
                 self.const_res_set[v].append(result[v]['value'])
-            print "\tDone! "+str(ind)+" values fond for this variable"
+            print "\tDone! "+str(ind)+" values found for this variable"
 
         # query_str = Prefix.writePrefixes(prefixes, "SPARQL") + \
         #         " SELECT * FROM <"+GRAPH_URI+"> " + \
