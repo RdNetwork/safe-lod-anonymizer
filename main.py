@@ -60,8 +60,8 @@ def main():
                 os.remove(f)
             for f in glob.glob("./out/policies/*.txt"):
                 os.remove(f)
-            with open("./out/results/selectivity.csv","w+") as f:
-                f.write("Thread,Mutation,Selectivity\n")    
+            with open("./out/results/specificity.csv","w+") as f:
+                f.write("Thread,Mutation,Specificity\n")    
 
     else:
         p_pol_size = int(sys.argv[1])
@@ -134,8 +134,8 @@ def main():
 
                 mutation_nb = 0
                 if EXP:
-                    print "Computing original selectivity..."
-                    mutated_p.get_selectivity(th,mutation_nb)
+                    print "Computing original specificity..."
+                    mutated_p.get_specificity(th,mutation_nb)
 
                 while (mutated_p != None and mutation_nb < NB_MUTATIONS):
                     if not TEST and not DEMO:
@@ -178,8 +178,8 @@ def main():
                             break
 
                         mutation_nb += 1
-                        print "Computing selectivity..."
-                        mutated_p.get_selectivity(th,mutation_nb)
+                        print "Computing specificity..."
+                        mutated_p.get_specificity(th,mutation_nb)
                     else:
                         break
 

@@ -23,7 +23,7 @@ def get_number_triples(sparql, graph):
 def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
     """Experimental process runner"""
     sparql = SPARQLWrapper.SPARQLWrapper(ENDPOINT)
-    sparql.setTimeout(2000)
+    sparql.setTimeout(5000)
     
     if prec_chk:
         print "Reading pre-stored values..."

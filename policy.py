@@ -33,10 +33,10 @@ class Policy():
     def __str__(self):
         return "[\n\t" + "\n\t".join([str(q) for q in self.queries]) + "\n]"
 
-    def get_selectivity(self, num_thr, num_mut):
+    def get_specificity(self, num_thr, num_mut):
         sparql = SPARQLWrapper.SPARQLWrapper(ENDPOINT)
-        with open("./out/results/selectivity.csv","a+") as f:
-            # Compute mutated policy's selectivity on the original graph   
+        with open("./out/results/specificity.csv","a+") as f:
+            # Compute mutated policy's specificityty on the original graph   
             nb_res = 0
             for q in self.queries:
                 q_str = "DEFINE sql:log-enable 2 WITH <"+OLD_GRAPH+"> " + q.str_count()
