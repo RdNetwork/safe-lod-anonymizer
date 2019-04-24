@@ -21,37 +21,35 @@ def find_safe_ops(privacy_pol, sameas):
         cc_ind = 0
         for g_c in ccomp:
             print "\t\tConnected component found in privacy policy query..."
-            ind_l = {}
-            ind_v = {}
+            ind = {}
             for c in g_c:
                 b_index = 0
                 (s,p,o) = decompose_triple(c)
                 if (type(s) == variable.Var) or (':' in s):
                     if (type(s) == variable.Var):
                         s = var_to_str(s)
-                    if not s in ind_v:
-                        ind_v[s] = 0
-                    ind_v[s] += 1
+                    if not s in ind:
+                        ind[s] = 0
+                    ind[s] += 1
                 if (type(o) == variable.Var) or (':' in o):
                     if (type(o) == variable.Var):
                         o = var_to_str(o)
-                    if not o in ind_v:
-                        ind_v[o] = 0
-                    ind_v[o] += 1
+                    if not o in ind:
+                        ind[o] = 0
+                    ind[o] += 1
                 else:
-                    if not o in ind_l:
-                        ind_l[o] = set()
-                    ind_l[o].add(c)
+                    if not o in ind:
+                        ind[o] = set()
+                    ind[o].add(c)
             # First operation: critical vars and IRIs replaced by blanks
             v_crit = set(res_vars[cc_ind])
-            for v,g in ind_v.iteritems():
+            for v,g in ind.iteritems():
                 if g > 1:
                     v_crit.add(v)
             if v_crit:
                 print("\t\tCritical variables and IRIs: " + str(v_crit))
             v_index = 0
             
-            #v = var_to_str(v)
             if sameas:
                 for t in g_c:
                     for v in v_crit:
@@ -76,7 +74,6 @@ def find_safe_ops(privacy_pol, sameas):
                             p = t.split(" ")[1]
                         else:
                             (s,p,o,_) = t.split(" ")
-                        # (s,p,o) = decompose_triple(t)
                         if s in v_crit:
                             x_bar_prime.add(s)
                         if p in v_crit:
@@ -96,23 +93,7 @@ def find_safe_ops(privacy_pol, sameas):
                         res.append("!isBlank("+v+")")
                     ops.append(Operation(x, x_prime, x, " && ".join(res)))
                 
-
-            # Second operation: triples with critical literals deleted
-            g_prime = []
-            l_crit = set()
-            for l,g in ind_l.iteritems():
-                if len(g) > 1:
-                    l_crit.add(l)  
-            if l_crit:
-                print("Critical literals: " + str(l_crit))  
-            for l in l_crit:
-                for t in ind_l[l]:
-                    (s_l,p_l,_) = decompose_triple(t)
-                    if s_l not in v_crit and p_l not in v_crit:
-                        g_prime.append(t)
-            if g_prime:
-                ops.append(Operation(g_prime, None, g_prime))
-            # Third operation : boolean query case
+            # Second operation : boolean query case
             if len(q.select) == 0:
                 # case of a boolean query: pick the first triple and delete it
                 ops.append(Operation([c], None, q.where))
