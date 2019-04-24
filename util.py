@@ -68,7 +68,10 @@ def decompose_triple(t):
     s_str = t.split(" ")[0]
     p_str = t.split(" ")[1]
     if len(t.split(" ")) > 3:
-        o_str = " ".join(t.split(" ")[2:])
+        if t.split(" ")[-1] == ".":
+            o_str = " ".join(t.split(" ")[2:-1])
+        else:
+            o_str = " ".join(t.split(" ")[2:])
     else:
         o_str = t.split(" ")[2]
 

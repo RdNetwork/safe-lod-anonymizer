@@ -4,11 +4,13 @@ import re
 import SPARQLWrapper
 import time
 import csv
+import pyodbc
 from util import ConfigSectionMap
 
 ENDPOINT=ConfigSectionMap("Endpoint")['url']
 OLD_GRAPH=ConfigSectionMap("Graph")['uri']+ConfigSectionMap("Graph")['name']+"/"
 NEW_GRAPH=OLD_GRAPH[:-1]+'_anon'
+DSN=ConfigSectionMap("ODBC")['dsn']
 
 def get_number_triples(sparql, graph):
     """Get the total number of triples in a graph."""
@@ -49,12 +51,16 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
 
     for nb_th in range(0,nb_threads):
         for nb_mut in range(0, nb_mutations):
-            with open("./out/ops/thr"+str(nb_th)+"_mut"+str(nb_mut)+".txt") as f: 
-                clean_file = f.read().replace('\n', '').replace('\t', '')
-                ops = clean_file.split(",")
-                # Removing starting and ending brackets
-                ops[0] = ops[0][1:]
-                ops[-1] = ops[-1][:-1]
+            try:
+                with open("./out/ops/thr"+str(nb_th)+"_mut"+str(nb_mut)+".txt") as f: 
+                    clean_file = f.read().replace('\n', '').replace('\t', '')
+                    ops = clean_file.split(",")
+                    # Removing starting and ending brackets
+                    ops[0] = ops[0][1:]
+                    ops[-1] = ops[-1][:-1]
+            except:
+                print "Skipping missing mutation..."
+                continue
 
             # Cleanup query
             # print "Copying graph..."
@@ -68,7 +74,7 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
             new_upd_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"
             ind_op = 0
             for op in ops:
-                print "\tOp." + ind_op + " out of " + str(len(ops)) + "..."
+                print "\tOp." + str(ind_op+1) + " out of " + str(len(ops)) + "..."
                 ind_op += 1
                 (del_txt, upd_txt, where_txt) = parse_str_op(op)
                 # Creating graph with deleted triples
@@ -161,26 +167,75 @@ def parse_str_op(s):
 
 
 def get_IRIs(sparql, graph, blanks = False):
+    s = """SELECT  COUNT ( DISTINCT
+      box_hash (
+       __id2in ( "s_1_1_t0"."S"),
+       __id2in ( "s_1_1_t0"."P"),
+       __ro2sq ( "s_1_1_t0"."O"))) AS "callret-0"
+FROM DB.DBA.RDF_QUAD AS "s_1_1_t0"
+WHERE
+  "s_1_1_t0"."G" = __i2idn ( __bft( 'GRAPH' , 1))
+  AND
+  is_named_iri_id ( "s_1_1_t0"."O")
+OPTION (QUIETCAST)"""
+    s.replace("GRAPH",graph)
+
     if blanks:
-        check = "isBlank"
-    else: 
-        check = "isIRI"
+        # check = "isBlank"
+        s.replace("is_named_iri_id","is_bnode_iri_id")
+
+    # Specifying the ODBC driver, server name, database, etc. directly
+    cnxn =  pyodbc.connect('DSN=VM Virtuoso;UID=dba;PWD=dba')
+    # Create a cursor from the connection
+    cursor = cnxn.cursor()
 
     res = 0
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE { ?s ?p ?o FILTER "+check+"(?s)}")
-    sparql.setReturnFormat(SPARQLWrapper.JSON)
-    results = sparql.query().convert()
-    res += int(results["results"]["bindings"][0]['callret-0']['value'])
+    start = time.time()
+    cursor.execute(s)
+    res_int = cursor.fetchone()[0]
+    res += int(res_int) 
+    mid1 = time.time()
+    print "\t\tTook " + str(mid1-start) + " seconds to count blank objects ("+ res_int + ")."
 
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE {?s ?p ?o FILTER "+check+"(?p)}")
-    sparql.setReturnFormat(SPARQLWrapper.JSON)
-    results = sparql.query().convert()
-    res += int(results["results"]["bindings"][0]['callret-0']['value'])
+    s.replace('"s_1_1_t0"."O"','"s_1_1_t0"."P"')
+    cursor.execute(s)
+    res_int = cursor.fetchone()[0]
+    res += int(res_int) 
+    mid2 = time.time()
+    print "\t\tTook " + str(mid2-mid1) + " seconds to count blank predicates ("+ res_int + ")."
 
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE {?s ?p ?o FILTER "+check+"(?o)}")
-    sparql.setReturnFormat(SPARQLWrapper.JSON)
-    results = sparql.query().convert()
-    res += int(results["results"]["bindings"][0]['callret-0']['value']) 
+    s.replace('"s_1_1_t0"."P"','"s_1_1_t0"."S"')    
+    cursor.execute(s)
+    res_int = cursor.fetchone()[0]
+    res += int(res_int) 
+    end = time.time()
+    print "\t\tTook " + str(end-mid2) + " seconds to count blank subjects ("+ res_int + ")."
+
+    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE { ?s ?p ?o FILTER "+check+"(?s)}")
+    # sparql.setReturnFormat(SPARQLWrapper.JSON)
+    # results = sparql.query().convert()
+    # res_int = results["results"]["bindings"][0]['callret-0']['value']
+    # res += int(res_int)
+    # end = time.time()
+    # print "\t\tTook " + str(end-start) + " seconds to count blank subjects ("+ res_int + ")."
+
+    # start = time.time()
+    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE {?s ?p ?o FILTER "+check+"(?p)}")
+    # sparql.setReturnFormat(SPARQLWrapper.JSON)
+    # results = sparql.query().convert()
+    # res_int = results["results"]["bindings"][0]['callret-0']['value']
+    # res += int(res_int)
+    # end = time.time()
+    # print "\t\tTook " + str(end-start) + " seconds to count blank properties ("+ res_int + ")."
+
+    # start = time.time()
+    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE {?s ?p ?o FILTER "+check+"(?o)}")
+    # sparql.setReturnFormat(SPARQLWrapper.JSON)
+    # results = sparql.query().convert()
+    # res_int = results["results"]["bindings"][0]['callret-0']['value']
+    # res += int(res_int) 
+    # end = time.time()
+    # print "\t\tTook " + str(end-start) + " seconds to count blank objects ("+ res_int + ")."
 
     return res
     

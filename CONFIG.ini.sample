@@ -4,3 +4,6 @@ URL: http://your.endpoint:port/sparql/
 [Graph]
 URI: http://example.domain/
 Name: graph
+
+[ODBC]
+DSN: Virtuoso

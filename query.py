@@ -66,7 +66,7 @@ class Query(object):
     @staticmethod
     def parse_txt_queries(p_pol_size):
         """Parses textual policies files to a set of queries"""
-        root_path = "./conf/workloads/policies/"+ConfigSectionMap("Graph")['name']
+        root_path = "./conf/workloads/policies/"+ConfigSectionMap("Graph")['name']+"/"
         queries_str = []
         for i in range(1,p_pol_size+1):
             with open(root_path+'p'+str(i)+'.rq', 'r') as f:
