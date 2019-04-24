@@ -178,17 +178,19 @@ WHERE
   AND
   is_named_iri_id ( "s_1_1_t0"."O")
 OPTION (QUIETCAST)"""
-    s.replace("GRAPH",graph)
+
+    s = s.replace("GRAPH",graph)
 
     if blanks:
         # check = "isBlank"
-        s.replace("is_named_iri_id","is_bnode_iri_id")
+        s = s.replace("is_named_iri_id","is_bnode_iri_id")
 
     # Specifying the ODBC driver, server name, database, etc. directly
     cnxn =  pyodbc.connect('DSN=VM Virtuoso;UID=dba;PWD=dba')
     # Create a cursor from the connection
     cursor = cnxn.cursor()
 
+    # print s 
     res = 0
     start = time.time()
     cursor.execute(s)
@@ -197,14 +199,14 @@ OPTION (QUIETCAST)"""
     mid1 = time.time()
     print "\t\tTook " + str(mid1-start) + " seconds to count blank objects ("+ str(res_int) + ")."
 
-    s.replace('"s_1_1_t0"."O"','"s_1_1_t0"."P"')
+    s = s.replace('"s_1_1_t0"."O"','"s_1_1_t0"."P"')
     cursor.execute(s)
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     mid2 = time.time()
     print "\t\tTook " + str(mid2-mid1) + " seconds to count blank predicates ("+ str(res_int) + ")."
 
-    s.replace('"s_1_1_t0"."P"','"s_1_1_t0"."S"')    
+    s = s.replace('"s_1_1_t0"."P"','"s_1_1_t0"."S"')    
     cursor.execute(s)
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
