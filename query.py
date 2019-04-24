@@ -1,6 +1,7 @@
 import xml.etree.ElementTree
 import fyzz
 import random
+import collections
 from util import decompose_triple, get_connected_group, get_all_connected_groups, var_to_str, custom_prefixes, ConfigSectionMap
 from unification import var, Var
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -99,15 +100,18 @@ class Query(object):
         return queries
 
     def get_connected_components(self):
-        graph_dic = dict()
+        graph_dic = collections.OrderedDict()
         for t in self.where:
             (s,_,o) = decompose_triple(t)
-            try:
-                graph_dic[s].add(o)
-            except KeyError:
-                graph_dic[s] = {o}
-        components = get_all_connected_groups(graph_dic)
+            if s not in graph_dic:
+                graph_dic[s] = set() 
+            if o not in graph_dic:
+                graph_dic[o] = set() 
+            graph_dic[s].add(o)
 
+        print graph_dic
+        components = get_all_connected_groups(graph_dic)
+        print components
         res_components = []
         res_vars = []
         res_ind = 0
@@ -125,7 +129,9 @@ class Query(object):
                         res_vars[res_ind].add(var_to_str(o))  
                     res_components[res_ind].append(t)
             res_ind += 1
-            
+
+        for i in range(len(res_vars)):
+            print "Vars: " + str(res_vars[i]) + " / CC : " + str(res_components[i])
 
         return res_vars, res_components
 

@@ -66,7 +66,7 @@ def main():
     else:
         p_pol_size = int(sys.argv[1])
     
-    if "-t" in sys.argv:
+    if "--test" in sys.argv:
         print "Running in test mode: no graph anonymisation after computing sequences."
         TEST = True
 
@@ -123,7 +123,8 @@ def main():
 
         if not SKIP:
             for th in range(0,NB_MUT_THREADS):
-                print "Mutation thread number %d..." % th
+                if EXP:
+                    print "Mutation thread number %d..." % th
                 mutated_p = copy.deepcopy(p_pol)
                 if consts != []:
                     # Updating constants already used at each turn
@@ -182,6 +183,8 @@ def main():
                         mutated_p.get_specificity(th,mutation_nb)
                     else:
                         break
+                if not EXP:
+                    break
 
         # WIP: Graph anonymization
         if o and not TEST:    

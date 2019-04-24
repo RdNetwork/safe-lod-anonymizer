@@ -125,6 +125,7 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
             start = time.time()
             nb_added = get_IRIs(sparql, new_upd_graph, True)
             mid = time.time()
+            print "Fetching the number of existing blanks..."
             nb_existing = get_IRIs(sparql, new_del_graph, True)
             end = time.time()
             nb_new_blanks = nb_added - nb_existing
