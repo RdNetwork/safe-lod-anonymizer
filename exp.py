@@ -195,21 +195,21 @@ OPTION (QUIETCAST)"""
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     mid1 = time.time()
-    print "\t\tTook " + str(mid1-start) + " seconds to count blank objects ("+ res_int + ")."
+    print "\t\tTook " + str(mid1-start) + " seconds to count blank objects ("+ str(res_int) + ")."
 
     s.replace('"s_1_1_t0"."O"','"s_1_1_t0"."P"')
     cursor.execute(s)
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     mid2 = time.time()
-    print "\t\tTook " + str(mid2-mid1) + " seconds to count blank predicates ("+ res_int + ")."
+    print "\t\tTook " + str(mid2-mid1) + " seconds to count blank predicates ("+ str(res_int) + ")."
 
     s.replace('"s_1_1_t0"."P"','"s_1_1_t0"."S"')    
     cursor.execute(s)
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     end = time.time()
-    print "\t\tTook " + str(end-mid2) + " seconds to count blank subjects ("+ res_int + ")."
+    print "\t\tTook " + str(end-mid2) + " seconds to count blank subjects ("+ str(res_int) + ")."
 
     # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE { ?s ?p ?o FILTER "+check+"(?s)}")
     # sparql.setReturnFormat(SPARQLWrapper.JSON)
