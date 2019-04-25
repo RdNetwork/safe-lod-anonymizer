@@ -1,6 +1,7 @@
 import SPARQLWrapper
 import sys
 import time
+import os.path
 from exp import get_IRIs
 from util import ConfigSectionMap
 
@@ -34,18 +35,23 @@ def main():
         end = time.time()
         print "\tDone! (Took " + str(end-start) + " seconds)"
 
-        print "\tFetching degrees..."
-        start = time.time()
-        sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+uri+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-        results = sparql.query().convert()
-        with open("./initial_iris.csv","a+") as f:
-            for r in results["results"]["bindings"]:
-                node = r["n"]["value"]
-                out_deg = int(r["outDegree"]["value"])
-                in_deg = int(r["inDegree"]["value"])   
-                f.write(node + "," + str(out_deg) + "," + str(in_deg) + "\n")
-        end = time.time()
-        print "\tDone! (Took " + str(end-start) + " seconds)"    
+        if not os.path.isfile("./out/initial_deg_"+g+".csv"):
+            print "\tFetching degrees..."
+            start = time.time()
+            sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+uri+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+            sparql.setReturnFormat(SPARQLWrapper.JSON)
+            results = sparql.query().convert()
+ 
+            with open("./out/initial_deg_"+g+".csv","a+") as f:
+                for r in results["results"]["bindings"]:
+                    node = r["n"]["value"]
+                    out_deg = int(r["outDegree"]["value"])
+                    in_deg = int(r["inDegree"]["value"])   
+                    f.write(node + "," + str(out_deg) + "," + str(in_deg) + "\n")
+            end = time.time()
+            print "\tDone! (Took " + str(end-start) + " seconds)"    
+        else:
+            print "\tDegree file already existing. Skipping!"
 
 
 if __name__ == "__main__":
