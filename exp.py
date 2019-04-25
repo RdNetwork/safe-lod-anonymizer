@@ -278,8 +278,9 @@ def get_degrees(sparql, num_thr, num_mut, graph):
 
 
     print "\tUpdating original degrees..."
-    for line in fileinput.input("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", inplace = 1): 
-
+    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "r") as f: 
+        line = f.readline()
+        new_line = line
         for (n,o_d,i_d) in neg_deg:
             # Decrease degree for adequate nodes
             if line.split(",")[0] == n:
@@ -294,9 +295,19 @@ def get_degrees(sparql, num_thr, num_mut, graph):
                 new_o_d = str(int(line.split(",")[1]) + o_d) 
                 new_i_d = str(int(line.split(",")[2]) + i_d) 
                 new_line = ','.join((n,new_o_d,new_i_d))
+                found = True
                 break
 
-        print new_line
+        if not found:
+            with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "r") as f_new : 
+                o_d = str(int(line.split(",")[1]) + o_d) 
+                i_d = str(int(line.split(",")[2]) + i_d) 
+                new_line = ','.join((n,o_d,i_d))
+                f_new.write(new_line)
+        else: 
+            with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "r") as f_new: 
+                f_new.write(new_line)
+
 
 
 
