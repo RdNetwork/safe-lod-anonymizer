@@ -248,13 +248,13 @@ def get_degrees(sparql, num_thr, num_mut, graph):
     """Computing degrees for the given graph and mutation"""
 
     print "Computing degrees for this mutation..."
-    shutil.copyfile("./initial_deg.csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
+    shutil.copyfile("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
 
     if (num_mut == 0):
         return
 
     print "\tComputing negative degrees..."
-    sparql.setQuery("DEFINE sql:log-enable 3 WITH <"+"_"+str(nb_th)+"_"+str(nb_mut)+"_del"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(nb_th)+"_"+str(nb_mut)+"_del"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     results = sparql.query().convert()
     neg_deg = []
     for r in results["results"]["bindings"]:
@@ -264,7 +264,7 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         neg_deg.append((node,out_deg,in_deg))
 
     print "\tComputing positive degrees..."
-    sparql.setQuery("DEFINE sql:log-enable 3 WITH <"+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     results = sparql.query().convert()
     pos_deg = []
     for r in results["results"]["bindings"]:
