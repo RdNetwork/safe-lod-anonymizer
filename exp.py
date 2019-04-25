@@ -5,6 +5,7 @@ import SPARQLWrapper
 import time
 import csv
 import pyodbc
+import pyfastcopy
 from util import ConfigSectionMap
 
 ENDPOINT=ConfigSectionMap("Endpoint")['url']
@@ -147,9 +148,9 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
                 with open("./out/results/precision.csv", "a+") as f:
                     f.write(str(nb_th)+","+str(nb_mut)+","+str(prec_gen)+"\n") 
 
-            # if deg_chk: 
-            #     # Compute degree 
-            #     get_degrees(sparql, nb_th, nb_mut, NEW_GRAPH+"_"+TIMESTAMP)
+            if deg_chk: 
+                # Compute degree 
+                get_degrees(sparql, nb_th, nb_mut, NEW_GRAPH)
 
 
 def parse_str_op(s):
@@ -245,14 +246,55 @@ OPTION (QUIETCAST)"""
 
 def get_degrees(sparql, num_thr, num_mut, graph):
     """Computing degrees for the given graph and mutation"""
+
     print "Computing degrees for this mutation..."
-    sparql.setQuery("DEFINE sql:log-enable 3 WITH <"+graph+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    shutil.copyfile("./initial_deg.csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
+
+    if (num_mut == 0):
+        return
+
+    print "\tComputing negative degrees..."
+    sparql.setQuery("DEFINE sql:log-enable 3 WITH <"+"_"+str(nb_th)+"_"+str(nb_mut)+"_del"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     results = sparql.query().convert()
-    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "w+") as f:
-        print "Writing results..."
-        f.write("Node,OutDegree,InDegree\n")
-        for r in results["results"]["bindings"]:
-            f.write(r["n"]["value"]+','+r["outDegree"]["value"]+','+r["inDegree"]["value"]+"\n")
+    neg_deg = []
+    for r in results["results"]["bindings"]:
+        node = r["n"]["value"]
+        out_deg = int(r["outDegree"]["value"])
+        in_deg = int(r["inDegree"]["value"])
+        neg_deg.append((node,out_deg,in_deg))
+
+    print "\tComputing positive degrees..."
+    sparql.setQuery("DEFINE sql:log-enable 3 WITH <"+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    results = sparql.query().convert()
+    pos_deg = []
+    for r in results["results"]["bindings"]:
+        node = r["n"]["value"]
+        out_deg = int(r["outDegree"]["value"])
+        in_deg = int(r["inDegree"]["value"])
+        pos_deg.append((node,out_deg,in_deg))
+
+
+    print "\tUpdating original degrees..."
+    for line in fileinput.input("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", inplace = 1): 
+
+        for (n,o_d,i_d) in neg_deg:
+            # Decrease degree for adequate nodes
+            if line.split(",")[0] == n:
+                new_o_d = str(int(line.split(",")[1]) - o_d) 
+                new_i_d = str(int(line.split(",")[2]) - i_d) 
+                new_line = ','.join(n,new_o_d,new_i_d)
+                break
+
+        for (n,o_d,i_d) in pos_deg:
+            # Increase degree for adequate nodes
+            if line.split(",")[0] == n:
+                new_o_d = str(int(line.split(",")[1]) + o_d) 
+                new_i_d = str(int(line.split(",")[2]) + i_d) 
+                new_line = ','.join(n,new_o_d,new_i_d)
+                break
+
+        print new_line
+
 
 
 # def get_deleted_triples(server, orig_number):
