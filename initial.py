@@ -36,7 +36,7 @@ def main():
 
         print "\tFetching degrees..."
         start = time.time()
-        sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+        sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+uri+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
         results = sparql.query().convert()
         with open("./initial_iris.csv","a+") as f:
             for r in results["results"]["bindings"]:
