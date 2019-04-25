@@ -250,7 +250,7 @@ def get_degrees(sparql, num_thr, num_mut, graph):
     """Computing degrees for the given graph and mutation"""
 
     print "Computing degrees for this mutation..."
-    shutil.copyfile("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
+    # shutil.copyfile("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
 
     if (num_mut == 0):
         print "Original policy: skipping..."
@@ -276,37 +276,42 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         in_deg = int(r["inDegree"]["value"])
         pos_deg.append((node,out_deg,in_deg))
 
+    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "w+") as f_new : 
+        f_new.write("Node,OutDegree,InDegree")
 
-    print "\tUpdating original degrees..."
-    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "r") as f: 
-        line = f.readline()
-        new_line = line
-        for (n,o_d,i_d) in neg_deg:
-            # Decrease degree for adequate nodes
-            if line.split(",")[0] == n:
-                new_o_d = str(int(line.split(",")[1]) - o_d) 
-                new_i_d = str(int(line.split(",")[2]) - i_d) 
-                new_line = ','.join((n,new_o_d,new_i_d))
-                break
+    print "\tWriting new degrees..."
+    with open("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "r") as f: 
+        f.readline()    # Headers
+        for line in f:
+            new_line = line
+            found = False
 
-        for (n,o_d,i_d) in pos_deg:
-            # Increase degree for adequate nodes
-            if line.split(",")[0] == n:
-                new_o_d = str(int(line.split(",")[1]) + o_d) 
-                new_i_d = str(int(line.split(",")[2]) + i_d) 
-                new_line = ','.join((n,new_o_d,new_i_d))
-                found = True
-                break
+            for (n,o_d,i_d) in neg_deg:
+                # Decrease degree for adequate nodes
+                if line.split(",")[0] == n:
+                    new_o_d = str(int(line.split(",")[1]) - o_d) 
+                    new_i_d = str(int(line.split(",")[2]) - i_d) 
+                    new_line = ','.join((n,new_o_d,new_i_d))
+                    break
 
-        if not found:
-            with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "r") as f_new : 
-                o_d = str(int(line.split(",")[1]) + o_d) 
-                i_d = str(int(line.split(",")[2]) + i_d) 
-                new_line = ','.join((n,o_d,i_d))
-                f_new.write(new_line)
-        else: 
-            with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "r") as f_new: 
-                f_new.write(new_line)
+            for (n,o_d,i_d) in pos_deg:
+                # Increase degree for adequate nodes
+                if line.split(",")[0] == n:
+                    new_o_d = str(int(line.split(",")[1]) + o_d) 
+                    new_i_d = str(int(line.split(",")[2]) + i_d) 
+                    new_line = ','.join((n,new_o_d,new_i_d))
+                    found = True
+                    break
+
+            if not found:
+                with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new : 
+                    o_d = str(int(line.split(",")[1]) + o_d) 
+                    i_d = str(int(line.split(",")[2]) + i_d) 
+                    new_line = ','.join((n,o_d,i_d))
+                    f_new.write(new_line)
+            else: 
+                with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
+                    f_new.write(new_line)
 
 
 
