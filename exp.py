@@ -6,6 +6,8 @@ import time
 import csv
 import pyodbc
 import pyfastcopy
+import shutil
+import fileinput
 from util import ConfigSectionMap
 
 ENDPOINT=ConfigSectionMap("Endpoint")['url']
@@ -251,10 +253,11 @@ def get_degrees(sparql, num_thr, num_mut, graph):
     shutil.copyfile("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
 
     if (num_mut == 0):
+        print "Original policy: skipping..."
         return
 
     print "\tComputing negative degrees..."
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(nb_th)+"_"+str(nb_mut)+"_del"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_del"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     results = sparql.query().convert()
     neg_deg = []
     for r in results["results"]["bindings"]:
@@ -264,7 +267,7 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         neg_deg.append((node,out_deg,in_deg))
 
     print "\tComputing positive degrees..."
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(nb_th)+"_"+str(nb_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     results = sparql.query().convert()
     pos_deg = []
     for r in results["results"]["bindings"]:
@@ -282,7 +285,7 @@ def get_degrees(sparql, num_thr, num_mut, graph):
             if line.split(",")[0] == n:
                 new_o_d = str(int(line.split(",")[1]) - o_d) 
                 new_i_d = str(int(line.split(",")[2]) - i_d) 
-                new_line = ','.join(n,new_o_d,new_i_d)
+                new_line = ','.join((n,new_o_d,new_i_d))
                 break
 
         for (n,o_d,i_d) in pos_deg:
@@ -290,7 +293,7 @@ def get_degrees(sparql, num_thr, num_mut, graph):
             if line.split(",")[0] == n:
                 new_o_d = str(int(line.split(",")[1]) + o_d) 
                 new_i_d = str(int(line.split(",")[2]) + i_d) 
-                new_line = ','.join(n,new_o_d,new_i_d)
+                new_line = ','.join((n,new_o_d,new_i_d))
                 break
 
         print new_line
