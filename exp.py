@@ -254,15 +254,15 @@ def get_degrees(sparql, num_thr, num_mut, graph):
     print "\tWriting partial degrees..."
     for r in res_del["results"]["bindings"]:
         n = r["n"]["value"]
-        o_d = int(r["outDegree"]["value"])
-        i_d = int(r["inDegree"]["value"])
+        o_d = r["outDegree"]["value"]
+        i_d = r["inDegree"]["value"]
         with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "a+") as f: 
             f.write(','.join((n,o_d,i_d)))
 
     for r in res_upd["results"]["bindings"]:
         n = r["n"]["value"]
-        o_d = int(r["outDegree"]["value"])
-        i_d = int(r["inDegree"]["value"])
+        o_d = r["outDegree"]["value"]
+        i_d = r["inDegree"]["value"]
         with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "a+") as f: 
             f.write(','.join((n,o_d,i_d)))
 
