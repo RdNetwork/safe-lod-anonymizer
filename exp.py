@@ -277,43 +277,42 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         pos_deg.append((node,out_deg,in_deg))
 
     with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "w+") as f_new : 
-        f_new.write("Node,OutDegree,InDegree")
+        f_new.write("Node,OutDegree,InDegree\n")
 
+    pos_deg_temp = list(pos_deg)
     print "\tWriting new degrees..."
     with open("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "r") as f: 
         f.readline()    # Headers
         for line in f:
             new_line = line
-            found = False
+            n_orig = line.split(",")[0]
+            o_d_orig = line.split(",")[1]
+            i_d_orig = line.split(",")[2]
 
+            # Decrease degree for existing nodes
             for (n,o_d,i_d) in neg_deg:
-                # Decrease degree for adequate nodes
-                if line.split(",")[0] == n:
-                    new_o_d = str(int(line.split(",")[1]) - o_d) 
-                    new_i_d = str(int(line.split(",")[2]) - i_d) 
+                if n_orig == n:
+                    new_o_d = str(int(o_d_orig) - o_d) 
+                    new_i_d = str(int(i_d_orig) - i_d) 
                     new_line = ','.join((n,new_o_d,new_i_d))
                     break
 
+            # Increase degree for existing nodes and add new nodes
             for (n,o_d,i_d) in pos_deg:
-                # Increase degree for adequate nodes
-                if line.split(",")[0] == n:
-                    new_o_d = str(int(line.split(",")[1]) + o_d) 
-                    new_i_d = str(int(line.split(",")[2]) + i_d) 
+                if n_orig == n:
+                    new_o_d = str(int(new_o_d) + o_d) 
+                    new_i_d = str(int(new_i_d) + i_d) 
                     new_line = ','.join((n,new_o_d,new_i_d))
-                    found = True
+                    pos_deg_temp.remove((n,o_d,i_d))
                     break
-
-            if not found:
-                with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new : 
-                    o_d = str(int(line.split(",")[1]) + o_d) 
-                    i_d = str(int(line.split(",")[2]) + i_d) 
-                    new_line = ','.join((n,o_d,i_d))
-                    f_new.write(new_line)
-            else: 
-                with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
-                    f_new.write(new_line)
-
-
+            
+            with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
+                f_new.write(new_line)
+    
+    # Insert degrees for new nodes
+    for (n,o_d,i_d) in pos_deg_temp:
+        with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
+            f_new.write(','.join((n,o_d,i_d)))
 
 
 # def get_deleted_triples(server, orig_number):
