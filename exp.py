@@ -75,8 +75,8 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
             # sparql.query()
 
             print "Sequence of operations for mutation"+str(nb_mut)+" in thread "+str(nb_th)+"..."
-            new_del_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+TIMESTAMP+"_del"
-            new_upd_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+TIMESTAMP+"_upd"
+            new_del_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+"_del"
+            new_upd_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+"_upd"
             ind_op = 0
             for op in ops:
                 print "\tOp." + str(ind_op+1) + " out of " + str(len(ops)) + "..."
@@ -234,14 +234,14 @@ def get_degrees(sparql, num_thr, num_mut, graph):
 
     print "\tComputing deletion degrees..."
     start = time.time()
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+TIMESTAMP+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+str(TIMESTAMP)+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     res_del = sparql.query().convert()
     end = time.time()
     print "\tDone! (Took " + str(end-start) + " seconds)"
 
     print "\tComputing insertion degrees..."
     start = time.time()
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+TIMESTAMP+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+str(TIMESTAMP)+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     res_upd = sparql.query().convert()
     end = time.time()
     print "\tDone! (Took " + str(end-start) + " seconds)"
