@@ -258,8 +258,12 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         return
 
     print "\tComputing negative degrees..."
+    start = time.time()
     sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     res_neg = sparql.query().convert()
+    end = time.time()
+    print "\tDone! (Took " + str(end-start) + " seconds)"
+
     # neg_deg = []
     # for r in results["results"]["bindings"]:
     #     node = r["n"]["value"]
@@ -268,8 +272,11 @@ def get_degrees(sparql, num_thr, num_mut, graph):
     #     neg_deg.append((node,out_deg,in_deg))
 
     print "\tComputing positive degrees..."
+    start = time.time()
     sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
     res_pos = sparql.query().convert()
+    end = time.time()
+    print "\tDone! (Took " + str(end-start) + " seconds)"
     # pos_deg = []
     # for r in results["results"]["bindings"]:
     #     node = r["n"]["value"]
