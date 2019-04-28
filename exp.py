@@ -219,32 +219,6 @@ OPTION (QUIETCAST)"""
     end = time.time()
     print "\t\tTook " + str(end-mid2) + " seconds to count blank subjects ("+ str(res_int) + ")."
 
-    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE { ?s ?p ?o FILTER "+check+"(?s)}")
-    # sparql.setReturnFormat(SPARQLWrapper.JSON)
-    # results = sparql.query().convert()
-    # res_int = results["results"]["bindings"][0]['callret-0']['value']
-    # res += int(res_int)
-    # end = time.time()
-    # print "\t\tTook " + str(end-start) + " seconds to count blank subjects ("+ res_int + ")."
-
-    # start = time.time()
-    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE {?s ?p ?o FILTER "+check+"(?p)}")
-    # sparql.setReturnFormat(SPARQLWrapper.JSON)
-    # results = sparql.query().convert()
-    # res_int = results["results"]["bindings"][0]['callret-0']['value']
-    # res += int(res_int)
-    # end = time.time()
-    # print "\t\tTook " + str(end-start) + " seconds to count blank properties ("+ res_int + ")."
-
-    # start = time.time()
-    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT COUNT(DISTINCT *) WHERE {?s ?p ?o FILTER "+check+"(?o)}")
-    # sparql.setReturnFormat(SPARQLWrapper.JSON)
-    # results = sparql.query().convert()
-    # res_int = results["results"]["bindings"][0]['callret-0']['value']
-    # res += int(res_int) 
-    # end = time.time()
-    # print "\t\tTook " + str(end-start) + " seconds to count blank objects ("+ res_int + ")."
-
     return res
     
 
@@ -258,80 +232,39 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         print "Original policy: skipping..."
         return
 
-    print "\tComputing negative degrees..."
+    print "\tComputing deletion degrees..."
     start = time.time()
     sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+TIMESTAMP+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-    res_neg = sparql.query().convert()
+    res_del = sparql.query().convert()
     end = time.time()
     print "\tDone! (Took " + str(end-start) + " seconds)"
 
-    # neg_deg = []
-    # for r in results["results"]["bindings"]:
-    #     node = r["n"]["value"]
-    #     out_deg = int(r["outDegree"]["value"])
-    #     in_deg = int(r["inDegree"]["value"])
-    #     neg_deg.append((node,out_deg,in_deg))
-
-    print "\tComputing positive degrees..."
+    print "\tComputing insertion degrees..."
     start = time.time()
     sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+TIMESTAMP+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-    res_pos = sparql.query().convert()
+    res_upd = sparql.query().convert()
     end = time.time()
     print "\tDone! (Took " + str(end-start) + " seconds)"
-    # pos_deg = []
-    # for r in results["results"]["bindings"]:
-    #     node = r["n"]["value"]
-    #     out_deg = int(r["outDegree"]["value"])
-    #     in_deg = int(r["inDegree"]["value"])
-    #     pos_deg.append((node,out_deg,in_deg))
 
-    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "w+") as f_new : 
-        f_new.write("Node,OutDegree,InDegree\n")
+    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "w+") as f : 
+        f.write("Node,OutDegree,InDegree\n")
+    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "w+") as f : 
+        f.write("Node,OutDegree,InDegree\n")
 
-    res_pos_temp = copy.deepcopy(res_pos)
-    print "\tWriting new degrees..."
-    with open("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "r") as f: 
-        f.readline()    # Headers
-        for line in f:
-            new_line = line
-            n_orig = line.split(",")[0]
-            o_d_orig = line.split(",")[1]
-            i_d_orig = line.split(",")[2]
-
-            # Decrease degree for existing nodes
-            for r in res_neg["results"]["bindings"]:
-                n = r["n"]["value"]
-                o_d = int(r["outDegree"]["value"])
-                i_d = int(r["inDegree"]["value"])
-                if n_orig == n:
-                    new_o_d = str(int(o_d_orig) - o_d) 
-                    new_i_d = str(int(i_d_orig) - i_d) 
-                    new_line = ','.join((n,new_o_d,new_i_d))
-                    break
-
-            # Increase degree for existing nodes and add new nodes
-            for r in res_pos["results"]["bindings"]:
-                n = r["n"]["value"]
-                o_d = int(r["outDegree"]["value"])
-                i_d = int(r["inDegree"]["value"])
-                if n_orig == n:
-                    new_o_d = str(int(new_o_d) + o_d) 
-                    new_i_d = str(int(new_i_d) + i_d) 
-                    new_line = ','.join((n,new_o_d,new_i_d))
-                    res_pos_temp.remove(r)
-                    break
-            
-            with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
-                f_new.write(new_line)
-    
-    # Insert degrees for new nodes
-    for r in res_pos_temp["results"]["bindings"]:
+    print "\tWriting partial degrees..."
+    for r in res_del["results"]["bindings"]:
         n = r["n"]["value"]
         o_d = int(r["outDegree"]["value"])
         i_d = int(r["inDegree"]["value"])
-        with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
-            f_new.write(','.join((n,o_d,i_d)))
+        with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "a+") as f: 
+            f.write(','.join((n,o_d,i_d)))
 
+    for r in res_upd["results"]["bindings"]:
+        n = r["n"]["value"]
+        o_d = int(r["outDegree"]["value"])
+        i_d = int(r["inDegree"]["value"])
+        with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "a+") as f: 
+            f.write(','.join((n,o_d,i_d)))
 
 # def get_deleted_triples(server, orig_number):
 #     return int(orig_number) - count_triples(server, "http://localhost/"+NEW_GRAPH+"/")
