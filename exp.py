@@ -257,14 +257,14 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         o_d = r["outDegree"]["value"]
         i_d = r["inDegree"]["value"]
         with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "a+") as f: 
-            f.write(','.join((n,o_d,i_d)))
+            f.write(','.join((n,o_d,i_d))+"\n")
 
     for r in res_upd["results"]["bindings"]:
         n = r["n"]["value"]
         o_d = r["outDegree"]["value"]
         i_d = r["inDegree"]["value"]
         with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "a+") as f: 
-            f.write(','.join((n,o_d,i_d)))
+            f.write(','.join((n,o_d,i_d))+"\n")
 
 # def get_deleted_triples(server, orig_number):
 #     return int(orig_number) - count_triples(server, "http://localhost/"+NEW_GRAPH+"/")
