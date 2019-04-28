@@ -8,6 +8,7 @@ import pyodbc
 import pyfastcopy
 import shutil
 import fileinput
+import copy
 from util import ConfigSectionMap
 
 ENDPOINT=ConfigSectionMap("Endpoint")['url']
@@ -257,29 +258,29 @@ def get_degrees(sparql, num_thr, num_mut, graph):
         return
 
     print "\tComputing negative degrees..."
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_del"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-    results = sparql.query().convert()
-    neg_deg = []
-    for r in results["results"]["bindings"]:
-        node = r["n"]["value"]
-        out_deg = int(r["outDegree"]["value"])
-        in_deg = int(r["inDegree"]["value"])
-        neg_deg.append((node,out_deg,in_deg))
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    res_neg = sparql.query().convert()
+    # neg_deg = []
+    # for r in results["results"]["bindings"]:
+    #     node = r["n"]["value"]
+    #     out_deg = int(r["outDegree"]["value"])
+    #     in_deg = int(r["inDegree"]["value"])
+    #     neg_deg.append((node,out_deg,in_deg))
 
     print "\tComputing positive degrees..."
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_upd"+"/> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-    results = sparql.query().convert()
-    pos_deg = []
-    for r in results["results"]["bindings"]:
-        node = r["n"]["value"]
-        out_deg = int(r["outDegree"]["value"])
-        in_deg = int(r["inDegree"]["value"])
-        pos_deg.append((node,out_deg,in_deg))
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    res_pos = sparql.query().convert()
+    # pos_deg = []
+    # for r in results["results"]["bindings"]:
+    #     node = r["n"]["value"]
+    #     out_deg = int(r["outDegree"]["value"])
+    #     in_deg = int(r["inDegree"]["value"])
+    #     pos_deg.append((node,out_deg,in_deg))
 
     with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "w+") as f_new : 
         f_new.write("Node,OutDegree,InDegree\n")
 
-    pos_deg_temp = list(pos_deg)
+    res_pos_temp = copy.deepcopy(res_pos)
     print "\tWriting new degrees..."
     with open("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "r") as f: 
         f.readline()    # Headers
@@ -290,7 +291,10 @@ def get_degrees(sparql, num_thr, num_mut, graph):
             i_d_orig = line.split(",")[2]
 
             # Decrease degree for existing nodes
-            for (n,o_d,i_d) in neg_deg:
+            for r in res_neg["results"]["bindings"]:
+                n = r["n"]["value"]
+                o_d = int(r["outDegree"]["value"])
+                i_d = int(r["inDegree"]["value"])
                 if n_orig == n:
                     new_o_d = str(int(o_d_orig) - o_d) 
                     new_i_d = str(int(i_d_orig) - i_d) 
@@ -298,19 +302,25 @@ def get_degrees(sparql, num_thr, num_mut, graph):
                     break
 
             # Increase degree for existing nodes and add new nodes
-            for (n,o_d,i_d) in pos_deg:
+            for r in res_pos["results"]["bindings"]:
+                n = r["n"]["value"]
+                o_d = int(r["outDegree"]["value"])
+                i_d = int(r["inDegree"]["value"])
                 if n_orig == n:
                     new_o_d = str(int(new_o_d) + o_d) 
                     new_i_d = str(int(new_i_d) + i_d) 
                     new_line = ','.join((n,new_o_d,new_i_d))
-                    pos_deg_temp.remove((n,o_d,i_d))
+                    res_pos_temp.remove(r)
                     break
             
             with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
                 f_new.write(new_line)
     
     # Insert degrees for new nodes
-    for (n,o_d,i_d) in pos_deg_temp:
+    for r in res_pos_temp["results"]["bindings"]:
+        n = r["n"]["value"]
+        o_d = int(r["outDegree"]["value"])
+        i_d = int(r["inDegree"]["value"])
         with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f_new: 
             f_new.write(','.join((n,o_d,i_d)))
 
