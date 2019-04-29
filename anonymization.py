@@ -3,6 +3,7 @@ from operation import Operation
 from policy import Policy
 from unification import unify,var,variable
 from util import decompose_triple, replace_blank, var_to_str, powerset
+from query import Query
 
 def find_safe_ops(privacy_pol, sameas):
     """
@@ -62,6 +63,14 @@ def find_safe_ops(privacy_pol, sameas):
             else:
                 g_x = list(powerset(g_c))[::-1]
                 for x in g_x:
+                    q = Query([],x)
+                    if len(q.get_connected_components()) > 1:
+                        break
+                    # Calcul CC de x
+                    # Si len(cc(x)) > 1 
+                    #   break
+                    # car chacune des comp sera traitée par un x plus petit plus tard 
+                    
                     b_index = 0
                     # print "Considered subgraph:" + str(x)
                     x_prime = x

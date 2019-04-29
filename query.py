@@ -108,6 +108,7 @@ class Query(object):
             if o not in graph_dic:
                 graph_dic[o] = set() 
             graph_dic[s].add(o)
+            graph_dic[o].add(s)
 
         print graph_dic
         components = get_all_connected_groups(graph_dic)
