@@ -7,6 +7,7 @@ import csv
 import time
 import copy
 import glob
+import codecs
 from exp import run_eval
 from rdflib import Graph
 from policy import Policy
@@ -78,6 +79,7 @@ def main():
     if NOPRINT:
         block_print()
 
+    start = time.time()
     # Fetching gmark queries
     # DEMO uses a simple workload with 2 short queries.
     print "Fetching query workload..."
@@ -151,9 +153,10 @@ def main():
                     o = find_safe_ops(mutated_p, SAMEAS)
                     #print "Set of operations found:"
                     #print(o)
-                    
+                    end = time.time()
+                    print "\tDone! Operation generation took " + str(end-start) + " seconds"
                     # Writing operations to result files
-                    with open('./out/ops/thr'+str(th)+'_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
+                    with codecs.open('./out/ops/thr'+str(th)+'_mut'+str(mutation_nb)+'.txt', 'w+', "utf-8-sig") as outfile:
                         outfile.write(str(o))
                     
                     #with open('./out/stats_mut'+str(mutation_nb)+'.txt', 'w+') as outfile:
@@ -186,6 +189,7 @@ def main():
                 if not EXP:
                     break
 
+        print o
         # WIP: Graph anonymization
         if o and not TEST:    
                 # Import graph

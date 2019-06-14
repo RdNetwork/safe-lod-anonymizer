@@ -22,8 +22,8 @@ class Operation(object):
 
     def __str__(self):
         res = "\n\tDELETE { " + ' '.join(self.del_head)  + "} \n"
-        if self.upd_head:
-            res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
+        # if self.upd_head:
+        #     res = res + "\tINSERT { " + ' '.join(self.upd_head)  + "} \n "
         res = res + "\tWHERE { " + ' '.join(self.body)
         if self.filter:
             res = res + "\n\t\t FILTER (" + self.filter  + ")"

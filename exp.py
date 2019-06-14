@@ -9,13 +9,13 @@ import pyfastcopy
 import shutil
 import fileinput
 import copy
+import json
 from util import ConfigSectionMap
 
 ENDPOINT=ConfigSectionMap("Endpoint")['url']
 OLD_GRAPH=ConfigSectionMap("Graph")['uri']+ConfigSectionMap("Graph")['name']+"/"
 NEW_GRAPH=OLD_GRAPH[:-1]+'_anon'
 DSN=ConfigSectionMap("ODBC")['dsn']
-TIMESTAMP=time.time()
 
 def get_number_triples(sparql, graph):
     """Get the total number of triples in a graph."""
@@ -41,25 +41,33 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
         # nb_blanks = get_IRIs(sparql, OLD_GRAPH, True)
         nb_iris = None
         nb_blanks = None
+        old_quantity = None
         with open("./out/initial_iris.csv") as f:
             lines = csv.reader(f, delimiter=',')
             for l in lines:
                 if l[0] == ConfigSectionMap("Graph")['name']:
                     nb_iris = l[1]
                     nb_blanks = l[2]
+                    old_quantity = l[3]
                     break
-        if (nb_blanks == None) or (nb_iris == None):
+        if (nb_blanks == None) or (nb_iris == None) or (old_quantity == None):
             return
 
         with open("./out/results/precision.csv", "w+") as f:
-            f.write("Thread,Mutation,Precision,PrecSuppr,PrecGen\n")
+            f.write("Thread,Mutation,AbsPrecision,RelPrecision\n")
 
+    print "Fetching the number of existing blanks in the original graph..."
+    start = time.time()
+    nb_existing = get_IRIs(sparql, OLD_GRAPH, True)
+    end = time.time()
+    print "\tDone! (Took " + str(end-start) + " seconds)"
+              
     for nb_th in range(0,nb_threads):
         for nb_mut in range(0, nb_mutations):
             try:
-                with open("./out/ops/thr"+str(nb_th)+"_mut"+str(nb_mut)+".txt") as f: 
-                    clean_file = f.read().replace('\n', '').replace('\t', '')
-                    ops = clean_file.split(",")
+                with open("./out/ops/thr"+str(nb_th)+"_mut"+str(nb_mut)+".txt", "rb") as f: 
+                    clean_file = f.read().decode("utf-8-sig").encode("utf-8").replace('\t', '')
+                    ops = clean_file.split("\n,")
                     # Removing starting and ending brackets
                     ops[0] = ops[0][1:]
                     ops[-1] = ops[-1][:-1]
@@ -67,94 +75,108 @@ def run_eval(nb_threads, nb_mutations, deg_chk, prec_chk):
                 print "Skipping missing mutation..."
                 continue
 
+            TIMESTAMP=time.time()
+            new_graph_name = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+'/'
             # Cleanup query
-            # print "Copying graph..."
-            # sparql.setMethod(SPARQLWrapper.POST)
-            # sparql.setQuery('DEFINE sql:log-enable 2 COPY GRAPH <'+OLD_GRAPH+'> to GRAPH <'+NEW_GRAPH+"_"+TIMESTAMP+'/>')
-            # sparql.queryType = SPARQLWrapper.SELECT
-            # sparql.query()
+            start = time.time()
+            print "Copying graph..."
+            sparql.setMethod(SPARQLWrapper.POST)
+            sparql.setQuery('DEFINE sql:log-enable 2 COPY GRAPH <'+OLD_GRAPH+'> to GRAPH <'+new_graph_name+'>')
+            sparql.queryType = SPARQLWrapper.SELECT
+            sparql.query()
+            end = time.time()
+            print "\tDone! (Took "+str(end-start)+" seconds)"
+
 
             print "Sequence of operations for mutation"+str(nb_mut)+" in thread "+str(nb_th)+"..."
-            new_del_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+"_del"
-            new_upd_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+"_upd"
+            # new_del_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+"_del"
+            # new_upd_graph = NEW_GRAPH+"_"+str(nb_th)+"_"+str(nb_mut)+"_"+str(TIMESTAMP)+"_upd"
             ind_op = 0
+            sum_del = 0
+            # sum_upd = 0
+            print ops
             for op in ops:
                 print "\tOp." + str(ind_op+1) + " out of " + str(len(ops)) + "..."
                 ind_op += 1
-                (del_txt, upd_txt, where_txt) = parse_str_op(op)
-                # Creating graph with deleted triples
-                print "\tComputing deletion graph..."
-                start = time.time()
-                sparql.setMethod(SPARQLWrapper.POST)
-                sparql.setQuery("DEFINE sql:log-enable 2 INSERT { GRAPH <" + new_del_graph + "> { " + del_txt + " } }  WHERE { GRAPH <" + OLD_GRAPH + "> { " + where_txt + " } }")
-                sparql.setReturnFormat(SPARQLWrapper.JSON)
-                sparql.queryType = SPARQLWrapper.SELECT
-                sparql.query()
-                end = time.time()
-                print "\tDone! (Took " + str(end-start) + " seconds)"
+                # (del_txt, upd_txt, where_txt) = parse_str_op(op)
+                # # Creating graph with deleted triples
+                # print "\tComputing deletion graph..."
+                # start = time.time()
+                # sparql.setMethod(SPARQLWrapper.POST)
+                # sparql.setQuery("DEFINE sql:log-enable 2 INSERT { GRAPH <" + new_del_graph + "> { " + del_txt + " } }  WHERE { GRAPH <" + OLD_GRAPH + "> { " + where_txt + " } }")
+                # sparql.setReturnFormat(SPARQLWrapper.JSON)
+                # sparql.queryType = SPARQLWrapper.SELECT
+                # sparql.query()
+                # end = time.time()
+                # print "\tDone! (Took " + str(end-start) + " seconds)"
 
-                # Creating graph with new triples
-                print "\tComputing insertion graph..."
-                start = time.time()
-                sparql.setMethod(SPARQLWrapper.POST)
-                sparql.setQuery("DEFINE sql:log-enable 2 INSERT { GRAPH <" + new_upd_graph + "> { " + upd_txt + " } }  WHERE { GRAPH <" + OLD_GRAPH + "> { " + where_txt + " } }")
-                sparql.setReturnFormat(SPARQLWrapper.JSON)
-                sparql.queryType = SPARQLWrapper.SELECT
-                sparql.query()
-                end = time.time()
-                print "\tDone! (Took " + str(end-start) + " seconds)"
+                # # Creating graph with new triples
+                # print "\tComputing insertion graph..."
+                # start = time.time()
+                # sparql.setMethod(SPARQLWrapper.POST)
+                # sparql.setQuery("DEFINE sql:log-enable 2 INSERT { GRAPH <" + new_upd_graph + "> { " + upd_txt + " } }  WHERE { GRAPH <" + OLD_GRAPH + "> { " + where_txt + " } }")
+                # sparql.setReturnFormat(SPARQLWrapper.JSON)
+                # sparql.queryType = SPARQLWrapper.SELECT
+                # sparql.query()
+                # end = time.time()
+                # print "\tDone! (Took " + str(end-start) + " seconds)"
 
-                # res_check = True
-                # while (res_check == True):
-                #     print "Applying operation ("+str(sum_del)+" triples deleted so far)..."
-                #     sparql.setMethod(SPARQLWrapper.POST)
-                #     sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+NEW_GRAPH+"_"+TIMESTAMP+"/> " + op + " LIMIT 200000")
-                #     sparql.setReturnFormat(SPARQLWrapper.JSON)
-                #     sparql.queryType = SPARQLWrapper.SELECT
-                #     results = sparql.query().convert()
+                remaining = True
+                print "Applying operation..."
+                while remaining:
+                    sparql.setMethod(SPARQLWrapper.POST)
+                    print op
+                    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+new_graph_name+"> " + op + " LIMIT 100000")
+                    sparql.setReturnFormat(SPARQLWrapper.JSON)
+                    sparql.queryType = SPARQLWrapper.SELECT
+                    start = time.time()
+                    results = sparql.query().convert()
+                    end = time.time()
+                    print "\tDone! (Took "+ str(end-start) +" seconds)"
+                    msg = results["results"]["bindings"][0]['callret-0']['value']
+                    print "\t"+msg
+                    m = re.search(r".* (?P<del>\d+) .*", msg)
+ 
+                    # m = re.search(r".* (?P<del>\d+) .* (?P<ins>\d+) .*", msg)
+                    del_tot = m.group('del')
+                    # ins_tot = m.group('ins')
+                    ins_tot = 0
 
-                #     msg = results["results"]["bindings"][0]['callret-0']['value']
-                #     print msg
-                #     m = re.search(r".* (?P<del>\d+) .* (?P<ins>\d+) .*", msg)
-                #     del_tot = m.group('del')
-                #     ins_tot = m.group('ins')
-                #     if (del_tot < 200000):
-                #         res_check = False
-                        
-                #     # Compute number of deleted and replaced triples in this sequence
-                #     sum_upd += int(ins_tot)
-                #     del_trips = int(del_tot) - int(ins_tot)
-                #     sum_del += del_trips
+                    if (int(del_tot) == 0):
+                        remaining = False
+                        print "Operation done. Going to the next one..."
 
-            print "Fetching the number of new blanks..."
-            start = time.time()
-            nb_added = get_IRIs(sparql, new_upd_graph, True)
-            mid = time.time()
-            print "Fetching the number of existing blanks..."
-            nb_existing = get_IRIs(sparql, new_del_graph, True)
-            end = time.time()
-            nb_new_blanks = nb_added - nb_existing
-            print "\tDone! (Took " + str(mid-start) + " + " + str(end-mid) + " seconds)"
+                    # Compute number of deleted and replaced triples in this sequence
+                    # sum_upd += int(ins_tot)
+                    del_trips = int(del_tot) - int(ins_tot)
+                    sum_del += del_trips
 
             if prec_chk:
                 # Compute precision
-                # print "\tGetting number of blank nodes in the new graph..."
-                # nb_blanks_new = get_IRIs(sparql, NEW_GRAPH+"_"+TIMESTAMP+"/",True)
+                print "Fetching the number of new blanks..."
+                start = time.time()
+                nb_added = get_IRIs(sparql, new_graph_name, True)
+                end = time.time()
+                print "\tDone! (Took "+ str(end-start) +" seconds)"
 
-                # alpha = 0     # alpha > 0.5 <=> deletions are penalised
-                # prec_suppr = 1 - (float(sum_del) / float(old_quantity))
-                # print prec_suppr
-                # print str(nb_blanks_new) + " blank nodes in the new graph"
+                # Relative precision (added blanks)
+                nb_new_blanks = nb_added - nb_existing
+
+                # Absolute precision (RDFprec)
+                alpha = 0     # alpha > 0.5 <=> deletions are penalised
+                prec_suppr = 1 - (float(sum_del) / float(old_quantity))
+                print prec_suppr
+
                 prec_gen = 1 - (float(nb_new_blanks) / float(nb_iris))
                 print prec_gen
-                # prec = alpha*prec_suppr + (1.0 - alpha)*prec_gen 
+                prec = alpha*prec_suppr + (1.0 - alpha)*prec_gen 
                 # Write result line
                 with open("./out/results/precision.csv", "a+") as f:
-                    f.write(str(nb_th)+","+str(nb_mut)+","+str(prec_gen)+"\n") 
+                    f.write(str(nb_th)+","+str(nb_mut)+","+str(prec)+","+str(nb_new_blanks)+"\n") 
 
             if deg_chk: 
                 # Compute degree 
-                get_degrees(sparql, nb_th, nb_mut, NEW_GRAPH)
+                get_degrees(sparql, nb_th, nb_mut, new_graph_name)
 
 
 def parse_str_op(s):
@@ -203,21 +225,21 @@ OPTION (QUIETCAST)"""
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     mid1 = time.time()
-    print "\t\tTook " + str(mid1-start) + " seconds to count blank objects ("+ str(res_int) + ")."
+    print "\t\tTook " + str(mid1-start) + " seconds to count objects ("+ str(res_int) + ")."
 
     s = s.replace('"s_1_1_t0"."O"','"s_1_1_t0"."P"')
     cursor.execute(s)
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     mid2 = time.time()
-    print "\t\tTook " + str(mid2-mid1) + " seconds to count blank predicates ("+ str(res_int) + ")."
+    print "\t\tTook " + str(mid2-mid1) + " seconds to count predicates ("+ str(res_int) + ")."
 
     s = s.replace('"s_1_1_t0"."P"','"s_1_1_t0"."S"')    
     cursor.execute(s)
     res_int = cursor.fetchone()[0]
     res += int(res_int) 
     end = time.time()
-    print "\t\tTook " + str(end-mid2) + " seconds to count blank subjects ("+ str(res_int) + ")."
+    print "\t\tTook " + str(end-mid2) + " seconds to count subjects ("+ str(res_int) + ")."
 
     return res
     
@@ -228,51 +250,60 @@ def get_degrees(sparql, num_thr, num_mut, graph):
     print "Computing degrees for this mutation..."
     # shutil.copyfile("./out/initial_deg_"+ConfigSectionMap("Graph")['name']+".csv", "./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv")
 
-    if (num_mut == 0):
+    if (num_mut == 0 and num_thr > 0):
+        shutil.copyfile("./out/results/degree_thr0_mut0.csv", "./out/results/degree_thr"+str(num_thr)+"_mut0.csv")
         print "Original policy: skipping..."
         return
 
-    print "\tComputing deletion degrees..."
     start = time.time()
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+str(TIMESTAMP)+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-    res_del = sparql.query().convert()
-    end = time.time()
-    print "\tDone! (Took " + str(end-start) + " seconds)"
+    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"> SELECT (?outDegree + ?inDegree) as ?deg, count(?id) as ?nb WHERE { SELECT ?n as ?id (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n} } GROUP BY ?n } GROUP BY (?outDegree + ?inDegree) ORDER BY ASC(?deg)")
+    sparql.setReturnFormat(SPARQLWrapper.JSON)
+    res = sparql.query().convert()
 
-    print "\tComputing insertion degrees..."
-    start = time.time()
-    sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+str(TIMESTAMP)+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
-    res_upd = sparql.query().convert()
-    end = time.time()
-    print "\tDone! (Took " + str(end-start) + " seconds)"
+    print "\tWriting degrees..."
+    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+".csv", "a+") as f: 
+        for r in res["results"]["bindings"]:
+            deg = r["deg"]["value"]
+            freq = r["nb"]["value"]
+            f.write(','.join((deg,freq))+"\n")
 
-    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "w+") as f : 
-        f.write("Node,OutDegree,InDegree\n")
-    with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "w+") as f : 
-        f.write("Node,OutDegree,InDegree\n")
 
-    print "\tWriting partial degrees..."
-    for r in res_del["results"]["bindings"]:
-        n = r["n"]["value"]
-        o_d = r["outDegree"]["value"]
-        i_d = r["inDegree"]["value"]
-        with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "a+") as f: 
-            f.write(','.join((n,o_d,i_d))+"\n")
+    # print "\tComputing deletion degrees..."
+    # start = time.time()
+    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+str(TIMESTAMP)+"_del"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    # res_del = sparql.query().convert()
+    # end = time.time()
+    # print "\tDone! (Took " + str(end-start) + " seconds)"
 
-    for r in res_upd["results"]["bindings"]:
-        n = r["n"]["value"]
-        o_d = r["outDegree"]["value"]
-        i_d = r["inDegree"]["value"]
-        with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "a+") as f: 
-            f.write(','.join((n,o_d,i_d))+"\n")
+    # print "\tComputing insertion degrees..."
+    # start = time.time()
+    # sparql.setQuery("DEFINE sql:log-enable 2 WITH <"+graph+"_"+str(num_thr)+"_"+str(num_mut)+"_"+str(TIMESTAMP)+"_upd"+"> SELECT ?n (COALESCE(MAX(?out),0) as ?outDegree) (COALESCE(MAX(?in),0) as ?inDegree) WHERE{ {SELECT ?n (COUNT(?p)  AS ?out) WHERE {?n ?p ?n2.} GROUP BY ?n} UNION {SELECT ?n (COUNT(?p)  AS ?in) WHERE {?n2 ?p ?n} GROUP BY ?n}}")
+    # res_upd = sparql.query().convert()
+    # end = time.time()
+    # print "\tDone! (Took " + str(end-start) + " seconds)"
 
-# def get_deleted_triples(server, orig_number):
-#     return int(orig_number) - count_triples(server, "http://localhost/"+NEW_GRAPH+"/")
+    # with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "w+") as f : 
+    #     f.write("Node,OutDegree,InDegree\n")
+    # with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "w+") as f : 
+    #     f.write("Node,OutDegree,InDegree\n")
 
-# def count_triples(server, graph):
-#     res = server.query("WITH <"+graph+"> SELECT (COUNT(?s) AS ?triples) WHERE { ?s ?p ?o }")
-#     print res['results']['bindings'][0]['triples']['value'] + " triples found."
-#     return int(res['results']['bindings'][0]['triples']['value'])
+    # print "\tWriting partial degrees..."
+    # for r in res_del["results"]["bindings"]:
+    #     n = r["n"]["value"]
+    #     o_d = r["outDegree"]["value"]
+    #     i_d = r["inDegree"]["value"]
+    #     with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_del.csv", "a+") as f: 
+    #         f.write(','.join((n,o_d,i_d))+"\n")
+
+    # for r in res_upd["results"]["bindings"]:
+    #     n = r["n"]["value"]
+    #     o_d = r["outDegree"]["value"]
+    #     i_d = r["inDegree"]["value"]
+    #     with open("./out/results/degree_thr"+str(num_thr)+"_mut"+str(num_mut)+"_upd.csv", "a+") as f: 
+    #         f.write(','.join((n,o_d,i_d))+"\n")
+
+
+
 
 # def run_eval_alt(nb_threads, nb_mutations, deg_chk, prec_chk):
 #     """Alternative experimental process (more graph creations but with small graphs)"""

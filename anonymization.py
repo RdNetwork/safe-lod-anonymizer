@@ -63,13 +63,12 @@ def find_safe_ops(privacy_pol, sameas):
             else:
                 g_x = list(powerset(g_c))[::-1]
                 for x in g_x:
-                    q = Query([],x)
-                    if len(q.get_connected_components()) > 1:
+                    # Computing CC of the subgraph x
+                    # If len(cc(x)) > 1 we break, since each CC will be processed later in the algorithm 
+                    fake_q = Query([],x)
+                    (vars_cc,cc) = fake_q.get_connected_components()
+                    if len(cc) > 1:
                         break
-                    # Calcul CC de x
-                    # Si len(cc(x)) > 1 
-                    #   break
-                    # car chacune des comp sera traitée par un x plus petit plus tard 
                     
                     b_index = 0
                     # print "Considered subgraph:" + str(x)

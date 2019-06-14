@@ -110,9 +110,9 @@ class Query(object):
             graph_dic[s].add(o)
             graph_dic[o].add(s)
 
-        print graph_dic
+        #print graph_dic
         components = get_all_connected_groups(graph_dic)
-        print components
+        #print components
         res_components = []
         res_vars = []
         res_ind = 0
@@ -174,6 +174,8 @@ class Query(object):
             self.const_res_set[v] = []
             ind = 0
             for result in results["results"]["bindings"]:
+                if '"' in result[v]['value']:
+                    continue
                 ind += 1
                 if (ind % 100 == 0):
                     print "\t" + str(ind)
